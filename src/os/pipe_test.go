@@ -4,7 +4,7 @@
 
 // Test broken pipes on Unix systems.
 //
-//go:build !plan9 && !js
+//go:build !plan9 && !js && !wasi
 
 package os_test
 

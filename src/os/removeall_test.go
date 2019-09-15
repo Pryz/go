@@ -80,8 +80,8 @@ func TestRemoveAll(t *testing.T) {
 		t.Fatalf("Lstat %q succeeded after RemoveAll (third)", path)
 	}
 
-	// Chmod is not supported under Windows and test fails as root.
-	if runtime.GOOS != "windows" && Getuid() != 0 {
+	// Chmod is not supported under Windows and wasi and test fails as root.
+	if runtime.GOOS != "windows" && runtime.GOOS != "wasi" && Getuid() != 0 {
 		// Make directory with file and subdirectory and trigger error.
 		if err = MkdirAll(dpath, 0777); err != nil {
 			t.Fatalf("MkdirAll %q: %s", dpath, err)
