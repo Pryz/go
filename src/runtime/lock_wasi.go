@@ -6,8 +6,7 @@
 
 package runtime
 
-// wasm has no support for threads yet. There is no preemption.
-// See proposal: https://github.com/WebAssembly/threads
+// js/wasm has no support for threads yet. There is no preemption.
 // Waiting for a mutex or timeout is implemented as a busy loop
 // while allowing other goroutines to run.
 
@@ -96,14 +95,9 @@ func notetsleepg(n *note, ns int64) bool {
 	}
 }
 
-<<<<<<< HEAD
 func beforeIdle(int64, int64) (*g, bool) {
 	// FIXME: see lock_js.go
 	return nil, false
-=======
-func beforeIdle(delay int64) bool {
-	return false
->>>>>>> e90274e5e0 (wasi wip)
 }
 
 func checkTimeouts() {}
