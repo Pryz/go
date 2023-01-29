@@ -6,7 +6,8 @@
 
 package runtime
 
-// js/wasm has no support for threads yet. There is no preemption.
+// wasm has no support for threads yet. There is no preemption.
+// See proposal: https://github.com/WebAssembly/threads
 // Waiting for a mutex or timeout is implemented as a busy loop
 // while allowing other goroutines to run.
 
