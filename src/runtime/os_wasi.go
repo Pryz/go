@@ -17,7 +17,7 @@ type uintptr_t uint32
 type size_t uint32
 
 // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-errno-variant
-type __wasi_errno_t uint16
+type __wasi_errno_t uint32
 
 // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-timestamp-u64
 type __wasi_timestamp_t uint64
@@ -84,7 +84,6 @@ func __wasi_environ_sizes_get(
 ) __wasi_errno_t
 
 //go:wasmimport wasi_snapshot_preview1 proc_exit
->>>>>>> e90274e5e0 (wasi wip)
 func __wasi_proc_exit(
 	code int32,
 )

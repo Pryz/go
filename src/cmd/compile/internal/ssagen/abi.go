@@ -369,7 +369,9 @@ func CreateWasmImportWrapper(fn *ir.Func) bool {
 func toWasmFields(result *abi.ABIParamResultInfo, abiParams []abi.ABIParamAssignment) []obj.WasmField {
 	wfs := make([]obj.WasmField, len(abiParams))
 	for i, p := range abiParams {
+
 		t := p.Type
+		fmt.Println(p.Name.Sym().Name, t.NameString)
 		switch {
 		case t.IsInteger() && t.Size() == 4:
 			wfs[i].Type = obj.WasmI32
