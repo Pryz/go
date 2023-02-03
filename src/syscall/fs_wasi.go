@@ -16,6 +16,7 @@ import (
 type uintptr_t uint32
 type size_t uint32
 
+// Julien: do we actually want to expose all these types and syscalls ?
 type Device_t uint64
 type Fd_t uint32
 type Fdflags_t uint32
@@ -46,6 +47,8 @@ type Stat_t struct {
 	Atime    Timestamp_t
 	Mtime    Timestamp_t
 	Ctime    Timestamp_t
+
+	Mode int // FIXME
 }
 
 type Fdstat_t struct {
@@ -69,36 +72,40 @@ const (
 	FDFLAG_RSYNC    Fdflags_t = 0x0008
 	FDFLAG_SYNC     Fdflags_t = 0x0010
 
-	RIGHT_FD_DATASYNC             Rights_t = 0x0000000000000001
-	RIGHT_FD_READ                 Rights_t = 0x0000000000000002
-	RIGHT_FD_SEEK                 Rights_t = 0x0000000000000004
-	RIGHT_FD_FDSTAT_SET_FLAGS     Rights_t = 0x0000000000000008
-	RIGHT_FD_SYNC                 Rights_t = 0x0000000000000010
-	RIGHT_FD_TELL                 Rights_t = 0x0000000000000020
-	RIGHT_FD_WRITE                Rights_t = 0x0000000000000040
-	RIGHT_FD_ADVISE               Rights_t = 0x0000000000000080
-	RIGHT_FD_ALLOCATE             Rights_t = 0x0000000000000100
-	RIGHT_PATH_CREATE_DIRECTORY   Rights_t = 0x0000000000000200
-	RIGHT_PATH_CREATE_FILE        Rights_t = 0x0000000000000400
-	RIGHT_PATH_LINK_SOURCE        Rights_t = 0x0000000000000800
-	RIGHT_PATH_LINK_TARGET        Rights_t = 0x0000000000001000
-	RIGHT_PATH_OPEN               Rights_t = 0x0000000000002000
-	RIGHT_FD_READDIR              Rights_t = 0x0000000000004000
-	RIGHT_PATH_READLINK           Rights_t = 0x0000000000008000
-	RIGHT_PATH_RENAME_SOURCE      Rights_t = 0x0000000000010000
-	RIGHT_PATH_RENAME_TARGET      Rights_t = 0x0000000000020000
-	RIGHT_PATH_FILESTAT_GET       Rights_t = 0x0000000000040000
-	RIGHT_PATH_FILESTAT_SET_SIZE  Rights_t = 0x0000000000080000
-	RIGHT_PATH_FILESTAT_SET_TIMES Rights_t = 0x0000000000100000
-	RIGHT_FD_FILESTAT_GET         Rights_t = 0x0000000000200000
-	RIGHT_FD_FILESTAT_SET_SIZE    Rights_t = 0x0000000000400000
-	RIGHT_FD_FILESTAT_SET_TIMES   Rights_t = 0x0000000000800000
-	RIGHT_PATH_SYMLINK            Rights_t = 0x0000000001000000
-	RIGHT_PATH_REMOVE_DIRECTORY   Rights_t = 0x0000000002000000
-	RIGHT_PATH_UNLINK_FILE        Rights_t = 0x0000000004000000
-	RIGHT_POLL_FD_READWRITE       Rights_t = 0x0000000008000000
-	RIGHT_SOCK_SHUTDOWN           Rights_t = 0x0000000010000000
+	RIGHT_FD_DATASYNC Rights_t = 1 << iota
+	RIGHT_FD_READ
+	RIGHT_FD_SEEK
+	RIGHT_FDSTAT_SET_FLAGS
+	RIGHT_FD_SYNC
+	RIGHT_FD_TELL
+	RIGHT_FD_WRITE
+	RIGHT_FD_ADVISE
+	RIGHT_FD_ALLOCATE
+	RIGHT_PATH_CREATE_DIRECTORY
+	RIGHT_PATH_CREATE_FILE
+	RIGHT_PATH_LINK_SOURCE
+	RIGHT_PATH_LINK_TARGET
+	RIGHT_PATH_OPEN
+	RIGHT_FD_READDIR
+	RIGHT_PATH_READLINK
+	RIGHT_PATH_RENAME_SOURCE
+	RIGHT_PATH_RENAME_TARGET
+	RIGHT_PATH_FILESTAT_GET
+	RIGHT_PATH_FILESTAT_SET_SIZE
+	RIGHT_PATH_FILESTAT_SET_TIMES
+	RIGHT_FD_FILESTAT_GET
+	RIGHT_FD_FILESTAT_SET_SIZE
+	RIGHT_FD_FILESTAT_SET_TIMES
+	RIGHT_PATH_SYMLINK
+	RIGHT_PATH_REMOVE_DIRECTORY
+	RIGHT_PATH_UNLINK_FILE
+	RIGHT_POLL_FD_READWRITE
+	RIGHT_SOCK_SHUTDOWN
+	RIGHT_SOCK_ACCEPT
 
+	RIGHT_FULL Rights_t = Rights_t(^uint32(0))
+
+	// https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-filetype-variant
 	FILETYPE_UNKNOWN          Filetype_t = 0
 	FILETYPE_BLOCK_DEVICE     Filetype_t = 1
 	FILETYPE_CHARACTER_DEVICE Filetype_t = 2
@@ -118,17 +125,20 @@ const (
 	FILESTAT_SET_MTIM_NOW Fstflags_t = 0x0008
 )
 
+// https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-fd_closefd-fd---result-errno
 //go:wasmimport wasi_snapshot_preview1 fd_close
 func Fd_close(
 	fd Fd_t,
 ) Errno
 
+// https://github.com/ebAssembly/WASI/blob/main/phases/snapshot/docs.md#-fd_filestat_set_sizefd-fd-size-filesize---result-errno
 //go:wasmimport wasi_snapshot_preview1 fd_filestat_set_size
 func Fd_filestat_set_size(
 	fd Fd_t,
 	st_size Filesize_t,
 ) Errno
 
+// https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-fd_preadfd-fd-iovs-iovec_array-offset-filesize---resultsize-errno
 //go:wasmimport wasi_snapshot_preview1 fd_pread
 func Fd_pread(
 	fd Fd_t,
@@ -176,6 +186,14 @@ func Fd_seek(
 func Fd_fdstat_get(
 	fd Fd_t,
 	buf *Fdstat_t,
+) Errno
+
+// https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-fd_fdstat_set_rightsfd-fd-fs_rights_base-rights-fs_rights_inheriting-rights---result-errno
+//go:wasmimport wasi_snapshot_preview1 fd_fdstat_set_rights
+func Fd_fdstat_set_rights(
+	fd Fd_t,
+	rightsBase Rights_t,
+	rightsInheriting Rights_t,
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_filestat_get
@@ -292,8 +310,7 @@ func Random_get(
 	buf_len size_t,
 ) Errno
 
-const rootFD Fd_t = 3
-
+const rootFD Fd_t = 3 // TODO(Pryz): document where this magic number is coming from
 var rootRightsDir Rights_t
 var rootRightsFile Rights_t
 
@@ -306,7 +323,9 @@ func init() {
 	var stat Fdstat_t
 	errno := Fd_fdstat_get(rootFD, &stat)
 	if errno != 0 {
-		panic("cloud not get fdstat of root: " + errno.Error())
+		// TODO(Pryz): if errno is EBADF it is likely because nothing
+		// was mount into the module.
+		panic("could not get fdstat of root: " + errno.Error())
 	}
 	rootRightsDir = stat.RightsBase
 	rootRightsFile = stat.RightsInheriting
@@ -399,11 +418,13 @@ func Open(path string, openmode int, perm uint32) (int, error) {
 
 	var fdflags Fdflags_t
 	if openmode&O_APPEND != 0 {
-		fdflags |= FDFLAG_APPEND
+		//fdflags |= FDFLAG_APPEN
 	}
 	if openmode&O_SYNC != 0 {
 		fdflags |= FDFLAG_SYNC
 	}
+
+	rights = RIGHT_FULL
 
 	var fd Fd_t
 	errno := Path_open(
@@ -440,8 +461,14 @@ func CloseOnExec(fd int) {
 
 func Mkdir(path string, perm uint32) error {
 	path_ptr, path_len := preparePath(path, false)
-	errno := Path_create_directory(rootFD, path_ptr, path_len)
-	return errnoErr(errno)
+	if errno := Path_create_directory(rootFD, path_ptr, path_len); errno != 0 {
+		return errnoErr(errno)
+	}
+	// FIXME: matches rights to perm
+	if errno := Fd_fdstat_set_rights(rootFD, RIGHT_FULL, RIGHT_FULL); errno != 0 {
+		return errnoErr(errno)
+	}
+	return nil
 }
 
 func ReadDirent(fd int, buf []byte) (int, error) {
@@ -608,7 +635,7 @@ func Symlink(path, link string) error {
 	errno := Path_symlink(
 		&[]byte(path)[0],
 		size_t(len(path)),
-		rootFD,
+		rootFD, // TODO(Pryz): Meaning only works with absolute paths ?
 		new_path,
 		new_path_len,
 	)

@@ -244,6 +244,13 @@ func (p *noder) pragma(pos syntax.Pos, blankLine bool, text string, old syntax.P
 
 		if buildcfg.GOARCH == "wasm" {
 			// Only actually use them if we're compiling to WASM though.
+			f := strings.Fields(text)
+			if len(f) != 3 {
+				p.error(syntax.Error{Pos: pos, Msg: "usage: //go:wasmimport module_name import_name"})
+			}
+			if !base.Flag.CompilingRuntime && base.Ctxt.Pkgpath != "syscall/js" && base.Ctxt.Pkgpath != "syscall/js_test" && base.Ctxt.Pkgpath != "syscall" {
+				p.error(syntax.Error{Pos: pos, Msg: "//go:wasmimport directive cannot be used outside of runtime or syscall/js"})
+			}
 			pragma.WasmImport = &WasmImport{
 				Pos:    pos,
 				Module: f[1],

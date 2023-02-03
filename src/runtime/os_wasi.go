@@ -88,8 +88,6 @@ func __wasi_proc_exit(
 	code int32,
 )
 
-// https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-fd_writefd-fd-iovs-ciovec_array---resultsize-errno
-//
 //go:wasmimport wasi_snapshot_preview1 fd_write
 //go:noescape
 func __wasi_fd_write(
@@ -153,21 +151,9 @@ func osyield_no_g() {
 	osyield()
 }
 
-// FIXME: do we need a sepcific panic behavior for wasi ?
-//
-// const _SIGSEGV = 0xb
-//
-//
-// func sigpanic() {
-// 	g := getg()
-// 	if !canpanic(g) {
-// 		throw("unexpected signal during runtime execution")
-// 	}
-
-// 	// js only invokes the exception handler for memory faults.
-// 	g.sig = _SIGSEGV
-// 	panicmem()
-// }
+func sigpanic() {
+	// FIXME
+}
 
 type sigset struct{}
 
@@ -289,7 +275,6 @@ func goenvs() {
 }
 
 func walltime() (sec int64, nsec int32) {
-	// FIXME
 	return walltime1()
 }
 

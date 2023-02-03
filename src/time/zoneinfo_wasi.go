@@ -10,6 +10,9 @@ import (
 	"runtime"
 )
 
+// in wasi zoneinfo is managed by the runtime.
+var platformZoneSources = []string{}
+
 var zoneSources = []string{
 	"/usr/share/zoneinfo/",
 	"/usr/share/lib/zoneinfo/",

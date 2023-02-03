@@ -2,20 +2,16 @@ package main
 
 import (
 	"fmt"
-	//"syscall/js"
-	"time"
+	"path/filepath"
+	"io/fs"
 )
 
 func main() {
-	//v := js.ProbeWASM()
-	now := time.Now()
-	fmt.Println(now)
-	// fmt.Println("Hello world")
-	// v := run()
-	// fmt.Println(v)
-}
-
-func run() int {
-	v := 1
-	return v + 1
+	err := filepath.Walk("/", func(path string, info fs.FileInfo, err error) error {
+		fmt.Println(path)
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
 }

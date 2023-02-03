@@ -371,7 +371,6 @@ func toWasmFields(result *abi.ABIParamResultInfo, abiParams []abi.ABIParamAssign
 	for i, p := range abiParams {
 
 		t := p.Type
-		fmt.Println(p.Name.Sym().Name, t.NameString)
 		switch {
 		case t.IsInteger() && t.Size() == 4:
 			wfs[i].Type = obj.WasmI32

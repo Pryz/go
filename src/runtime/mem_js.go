@@ -23,6 +23,7 @@ func sbrk(n uintptr) unsafe.Pointer {
 	return unsafe.Pointer(uintptr(size) * _PAGESIZE)
 }
 
+// Implemented in src/runtime/sys_wasm.s
 func currentMemory() int32
 func growMemory(pages int32) int32
 
