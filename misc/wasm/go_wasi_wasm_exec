@@ -11,4 +11,10 @@ while [ -h "$SOURCE" ]; do
 done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-exec wasmtime --dir=/ --env=PWD=$PWD $1 -- "${@:2}"
+if [[ $RUNTIME == "wazero" ]]; then
+	echo "Running with wazero"
+	exec wazero run -env PWD=$PWD -mount $PWD:/ $1 -- "${@:2}"
+else
+	echo "Running with wasmtime"
+	exec wasmtime --dir=/ --env=PWD=$PWD $1 -- "${@:2}"
+fi

@@ -126,12 +126,14 @@ const (
 )
 
 // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-fd_closefd-fd---result-errno
+//
 //go:wasmimport wasi_snapshot_preview1 fd_close
 func Fd_close(
 	fd Fd_t,
 ) Errno
 
 // https://github.com/ebAssembly/WASI/blob/main/phases/snapshot/docs.md#-fd_filestat_set_sizefd-fd-size-filesize---result-errno
+//
 //go:wasmimport wasi_snapshot_preview1 fd_filestat_set_size
 func Fd_filestat_set_size(
 	fd Fd_t,
@@ -139,6 +141,7 @@ func Fd_filestat_set_size(
 ) Errno
 
 // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-fd_preadfd-fd-iovs-iovec_array-offset-filesize---resultsize-errno
+//
 //go:wasmimport wasi_snapshot_preview1 fd_pread
 func Fd_pread(
 	fd Fd_t,
@@ -189,6 +192,7 @@ func Fd_fdstat_get(
 ) Errno
 
 // https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-fd_fdstat_set_rightsfd-fd-fs_rights_base-rights-fs_rights_inheriting-rights---result-errno
+//
 //go:wasmimport wasi_snapshot_preview1 fd_fdstat_set_rights
 func Fd_fdstat_set_rights(
 	fd Fd_t,

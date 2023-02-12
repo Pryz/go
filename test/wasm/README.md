@@ -2,7 +2,7 @@
 
 Building a binary using `GOOS=wasi` currently works.
 
-Example: 
+Example:
 
 ```
 GOOS=wasi GOARCH=wasm GOROOT=$PWD/../.. ../../bin/go test -c -run TestFilesystem wasi_test.go
@@ -18,10 +18,31 @@ quick to fix.
 
 - Next on my list is de-duplicating `mem_js.go` and `mem_wasi.go` and create `mem_wasm.go`.
 The idea is to merge both once `resetMemoryDataView` (https://github.com/Pryz/go/blob/master/src/runtime/mem_js.go#L71)
-has been moved away. See: https://github.com/WebAssembly/design/issues/1296. Here the best is 
+has been moved away. See: https://github.com/WebAssembly/design/issues/1296. Here the best is
 probably to have some kind of var in `mem_wasm.go` and call the function from https://github.com/Pryz/go/blob/master/src/runtime/os_js.go#L103.
 The move of `resetMemoryDataView` will require it's own CL.
 
 - Fix `sigpanic` which is currently totally disabled.
 
 - Run all the std testsuite and fix things if needed.
+
+## Running tests under different runtimes
+
+Install [wasmtime](https://github.com/bytecodealliance/wasmtime/releases/tag/v5.0.0)
+and the wazero CLI:
+
+```
+$ go install github.com/tetratelabs/wazero/cmd/wazero@latest
+```
+
+You can then run the tests on either runtime. By default, it will use `wasmtime`:
+
+```
+$ GOOS=wasi GOARCH=wasm GOROOT=$PWD/../.. PATH=$PWD/../../misc/wasm/:$PATH ../../bin/go test -timeout 10s -v ../../src/bufio/example_test.go
+```
+
+Set the environment variable `RUNTIME=wazero` to use `wazero`:
+
+```
+$ RUNTIME=wazero GOOS=wasi GOARCH=wasm GOROOT=$PWD/../.. PATH=$PWD/../../misc/wasm/:$PATH ../../bin/go test -timeout 10s -v ../../src/bufio/example_test.go
+```
