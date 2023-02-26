@@ -62,6 +62,8 @@ func ValidPath(name string) bool {
 		}
 		elem := name[:i]
 		if elem == "" || elem == "." || elem == ".." {
+            //str := "elem:'"+elem+"'"
+            //panic(str)
 			return false
 		}
 		if i == len(name) {

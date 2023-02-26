@@ -12,20 +12,16 @@ import (
 )
 
 func direntIno(buf []byte) (uint64, bool) {
-	return 1, true
+    return readInt(buf, unsafe.Offsetof(syscall.Dirent{}.Ino), unsafe.Sizeof(syscall.Dirent{}.Ino))
 }
 
 func direntReclen(buf []byte) (uint64, bool) {
-	return 0, false
-	//return readInt(buf, unsafe.Offsetof(syscall.Dirent{}.Reclen), unsafe.Sizeof(syscall.Dirent{}.Reclen))
+	namelen, ok := direntNamlen(buf)
+	return 24 + namelen, ok
 }
 
 func direntNamlen(buf []byte) (uint64, bool) {
-	reclen, ok := direntReclen(buf)
-	if !ok {
-		return 0, false
-	}
-	return reclen - uint64(unsafe.Offsetof(syscall.Dirent{}.Name)), true
+    return readInt(buf, unsafe.Offsetof(syscall.Dirent{}.Namlen), unsafe.Sizeof(syscall.Dirent{}.Namlen))
 }
 
 func direntType(buf []byte) FileMode {

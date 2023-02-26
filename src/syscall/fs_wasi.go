@@ -365,6 +365,7 @@ func preparePath(path string, followTrailingSymlink bool) (*byte, size_t) {
 		}
 	}
 
+    // Oh my
 	return &[]byte("." + resolvedPath)[0], size_t(1 + len(resolvedPath))
 }
 
@@ -409,6 +410,15 @@ func Open(path string, openmode int, perm uint32) (int, error) {
 	if openmode&O_EXCL != 0 {
 		oflags |= OFLAG_EXCL
 	}
+
+    // Remove when https://github.com/bytecodealliance/wasmtime/pull/4967 is merged.
+    st := &Stat_t{}
+    if err := Stat(path, st); err != nil && err != ENOENT {
+        return 0, err
+    }
+    if st.Filetype == FILETYPE_DIRECTORY {
+        oflags |= OFLAG_DIRECTORY
+    }
 
 	var rights = rootRightsFile
 	switch {
@@ -469,9 +479,8 @@ func Mkdir(path string, perm uint32) error {
 		return errnoErr(errno)
 	}
 	// FIXME: matches rights to perm
-	if errno := Fd_fdstat_set_rights(rootFD, RIGHT_FULL, RIGHT_FULL); errno != 0 {
-		return errnoErr(errno)
-	}
+    // Not all WASM runtime support rights so we ignore the potential error.
+	_ = Fd_fdstat_set_rights(rootFD, RIGHT_FULL, RIGHT_FULL)
 	return nil
 }
 

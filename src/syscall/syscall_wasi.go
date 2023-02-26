@@ -10,30 +10,35 @@ import (
 	"internal/itoa"
 	"internal/oserror"
 	"sync"
+    "unsafe"
 )
 
 type Dirent struct {
+    // The offset of the next directory entry stored in this directory.
 	Next   Dircookie_t
+    // The serial number of the file referred to by this directory entry.
 	Ino    Inode_t
+    // The length of the name of the directory entry.
 	Namlen uint32
+    // The type of the file referred to by this directory entry.
 	Type   Filetype_t
+    // Name of the directory entry.
 	Name   *byte
 }
 
 func direntIno(buf []byte) (uint64, bool) {
-	return 1, true
+    return readInt(buf, unsafe.Offsetof(Dirent{}.Ino), unsafe.Sizeof(Dirent{}.Ino))
 }
 
 func direntReclen(buf []byte) (uint64, bool) {
-	namelen, ok := readInt(buf, 16, 4)
+	namelen, ok := direntNamlen(buf)
 	return 24 + namelen, ok
-	// return readInt(buf, unsafe.Offsetof(Dirent{}.Reclen), unsafe.Sizeof(Dirent{}.Reclen))
 }
 
 func direntNamlen(buf []byte) (uint64, bool) {
-	return readInt(buf, 16, 4)
+    return readInt(buf, unsafe.Offsetof(Dirent{}.Namlen), unsafe.Sizeof(Dirent{}.Namlen))
 }
-
+    
 const PathMax = 256
 
 // An Errno is an unsigned number describing an error condition.

@@ -1,19 +1,122 @@
 package wasi_test
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 	"testing"
 	"testing/fstest"
-	"syscall"
-	"fmt"
+    //"io/fs"
 )
+
+func TestFsys(t*testing.T) {
+    // `tmp` will be created at the root of the FS.
+	tmp := "wasi_testfs"
+
+    fmt.Println("Create filesystem")
+	err := os.Mkdir(tmp, 0777)
+	if err != nil {
+		log.Fatal("MkdirTemp: ", err)
+	}
+	defer func() {
+        fmt.Println("Cleaning things up")
+        //os.RemoveAll(tmp)
+    }()
+
+    //tmp = "./" + tmp
+	//tmpfs := os.DirFS(tmp)
+	tmpfs := os.DirFS("/")
+
+	if err := os.WriteFile(filepath.Join(tmp, "hello"), []byte("hello, world\n"), 0777); err != nil {
+		t.Fatal(err)
+	}
+
+    //fmt.Println("Open filesystem")
+    //f, err := tmpfs.Open(tmp)
+    //if err != nil {
+    //    fmt.Println("failed to open dir ", err)
+    //    t.Fatal(err)
+    //}
+
+    //d, ok := f.(fs.ReadDirFile)
+    //if !ok {
+    //    t.Fatalf("not a directory")
+    //}
+
+    //entries, err := d.ReadDir(-1)
+    //if err != nil {
+    //    t.Fatal(err)
+    //}
+
+    hello_path := "wasi_testfs/hello"
+    link_path := "wasi_testfs/hello.link"
+
+	if err := os.Symlink(hello_path, link_path); err != nil {
+	    t.Fatal(err)
+	}
+
+	if err := fstest.TestFS(tmpfs, "hello", "hello.link"); err != nil {
+		t.Fatal(err)
+	}
+
+}
+
+//FIXME
+//func preparePath(path string, followTrailingSymlink bool) (*byte, size_t) {
+//	if path == "" || path[0] != '/' {
+//		path = wd + "/" + path
+//	}
+//
+//	parts := strings.Split(path[1:], "/")
+//	resolvedPath := ""
+//	for i, part := range parts {
+//		resolvedPath += "/" + part
+//		if i == len(parts)-1 && !followTrailingSymlink {
+//			break
+//		}
+//		for {
+//			dest, err := readlink("." + resolvedPath)
+//			if err != nil {
+//				break
+//			}
+//			if dest[0] != '/' {
+//				i := strings.LastIndexByte(resolvedPath, '/')
+//				dest = resolvedPath[:i] + "/" + dest
+//			}
+//			resolvedPath = dest
+//		}
+//	}
+//
+//    // Oh my
+//	return &[]byte("." + resolvedPath)[0], size_t(1 + len(resolvedPath))
+//}
+
+//func TestDirent(t*testing.T) {
+//    t.SkipNow()
+//    fh, err := os.Open("/")
+//    if err != nil {
+//        t.Fatal(err)
+//    }
+//
+//    buf := make([]byte, 8192)
+//
+//    _, err = fh.ReadDirent(buf)
+//    if err != nil {
+//        t.Fatal(err)
+//    }
+//
+//    names := []string{}
+//    consumed, count, newnames := syscall.ParseDirent(buf, 50, names)
+//    fmt.Println(consumed, count, newnames)
+//    fmt.Println(names)
+//}
 
 func TestFilesystem(t *testing.T) {
 	// /tmp
-	//t.SkipNow()
-	tmp, err := os.MkdirTemp("/", "wasi_test")
+	t.SkipNow()
+	tmp := "/wasi_testfs"
+	err := os.Mkdir(tmp, 0777)
 	if err != nil {
 		log.Fatal("MkdirTemp: ", err)
 	}
@@ -25,78 +128,16 @@ func TestFilesystem(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	//if err := os.Symlink(filepath.Join(tmp, "hello"), filepath.Join(tmp, "hello.link")); err != nil {
-	//	t.Fatal(err)
+	// WASI doesn't support symlink with absolute path ?
+	if err := os.Chdir(tmp); err != nil {
+	    t.Fatal(err)
+	}
+
+	//if err := os.Symlink("hello", "hello.link"); err != nil {
+	//t.Fatal(err)
 	//}
 
-	//if err := fstest.TestFS(tmpfs, "hello", "hello.link"); err != nil {
-	if err := fstest.TestFS(tmpfs, "hello"); err != nil {
+	if err := fstest.TestFS(tmpfs, "hello", "hello.link"); err != nil {
 		t.Fatal(err)
 	}
-}
-
-func TestFS2(t *testing.T) {
-	var stat syscall.Fdstat_t
-	errno := syscall.Fd_fdstat_get(syscall.Fd_t(3), &stat)
-	if errno != 0 {
-		panic("could not get fdstat of root: " + errno.Error())
-	}
-
-	fmt.Println("rootFD")
-	fmt.Printf("%+v\n", stat)
-	fmt.Printf("%b\n", stat.RightsBase)
-	fmt.Printf("%b\n", stat.RightsInheriting)
-
-	tmp := "/wasi_fs2"
-	fmt.Println("mkdir ", tmp)
-	if err := syscall.Mkdir(tmp, 0777); err != nil {
-		panic(err)
-	}
-	defer os.RemoveAll(tmp)
-
-	//tmpfs := os.DirFS(tmp)
-
-	fmt.Println("open ", tmp+"/foobar")
-	fd, err := syscall.Open(filepath.Join(tmp, "foobar"), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o777)
-	if err != nil {
-		panic(err)
-	}
-
-
-	fmt.Println("fdstat ", tmp+"/foobar")
-	errno = syscall.Fd_fdstat_get(syscall.Fd_t(fd), &stat)
-	if errno != 0 {
-		panic("could not get fdstat of file: " + errno.Error())
-	}
-
-	fmt.Println(filepath.Join(tmp, "foobar"))
-	fmt.Printf("%+v\n", stat)
-	fmt.Printf("%b\n", stat.RightsBase)
-	fmt.Printf("%b\n", stat.RightsInheriting)
-
-	fmt.Println("close ", tmp+"/foobar")
-	if err := syscall.Close(fd); err != nil {
-		panic(err)
-	}
-
-	fmt.Println("symlink ", tmp+"/foobar")
-	//err = syscall.Symlink(tmp +"/foobar", tmp+"/foobar.link")
-	err = syscall.Symlink("./foobar", "./foobar.link")
-	if err != nil {
-		panic(err)
-	}
-
-	if err := os.WriteFile(filepath.Join(tmp, "hello"), []byte("hello, world\n"), 0777); err != nil {
-		t.Fatal(err)
-	}
-
-
-	if err := os.Symlink(filepath.Join(tmp, "hello"), "/hello.link"); err != nil {
-		t.Fatal(err)
-	}
-
-	//if err := fstest.TestFS(tmpfs, "hello", "hello.link"); err != nil {
-	//	t.Fatal(err)
-	//}
-
 }

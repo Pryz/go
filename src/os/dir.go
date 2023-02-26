@@ -92,14 +92,18 @@ type DirEntry = fs.DirEntry
 // If n <= 0, ReadDir returns all the DirEntry records remaining in the directory.
 // When it succeeds, it returns a nil error (not io.EOF).
 func (f *File) ReadDir(n int) ([]DirEntry, error) {
+    println("ReadDir n")
 	if f == nil {
 		return nil, ErrInvalid
 	}
+    //FIXME(julien): f.readdir doesn't stop with wasi.
+    println("f.readdir")
 	_, dirents, _, err := f.readdir(n, readdirDirEntry)
 	if dirents == nil {
 		// Match Readdir and Readdirnames: don't return nil slices.
 		dirents = []DirEntry{}
 	}
+    println("done ReadDir")
 	return dirents, err
 }
 
