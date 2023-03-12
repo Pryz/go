@@ -12,8 +12,12 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 if [[ $RUNTIME == "wazero" ]]; then
+	ARGS=""
+	if [[ $DEBUG == "true" ]]; then
+		ARGS="-hostlogging=clock,exit,filesystem,memory,poll,random"
+	fi
 	echo "Running with wazero"
-	exec wazero run -env PWD=$PWD -mount $PWD:/ $1 -- "${@:2}"
+	exec wazero run -env PWD=/ -mount $PWD:/ $ARGS $1 -- "${@:2}"
 else
 	echo "Running with wasmtime"
 	exec wasmtime --dir=/ --env=PWD=$PWD $1 -- "${@:2}"
