@@ -7,7 +7,6 @@
 package syscall
 
 import (
-	"io"
 	"strings"
 	"sync"
 	"unsafe"
@@ -23,7 +22,7 @@ type Fdflags_t uint32
 type Filesize_t uint64
 type Filetype_t uint8
 type Inode_t uint64
-type Linkcount_t uint32
+type Linkcount_t uint64
 type Lookupflags_t uint32
 type Oflags_t uint32
 type Rights_t uint64
@@ -119,9 +118,9 @@ const (
 	FILETYPE_SOCKET_STREAM    Filetype_t = 6
 	FILETYPE_SYMBOLIC_LINK    Filetype_t = 7
 
-	WHENCE_CUR Whence_t = 0
-	WHENCE_END Whence_t = 1
-	WHENCE_SET Whence_t = 2
+	WHENCE_SET Whence_t = 0
+	WHENCE_CUR Whence_t = 1
+	WHENCE_END Whence_t = 2
 
 	FILESTAT_SET_ATIM     Fstflags_t = 0x0001
 	FILESTAT_SET_ATIM_NOW Fstflags_t = 0x0002
@@ -706,19 +705,8 @@ func Pwrite(fd int, b []byte, offset int64) (int, error) {
 }
 
 func Seek(fd int, offset int64, whence int) (int64, error) {
-	var wasiWhence Whence_t
-	switch whence {
-	case io.SeekStart:
-		wasiWhence = WHENCE_SET
-	case io.SeekCurrent:
-		wasiWhence = WHENCE_CUR
-	case io.SeekEnd:
-		wasiWhence = WHENCE_END
-	default:
-		return 0, errnoErr(EINVAL)
-	}
 	var newoffset Filesize_t
-	errno := Fd_seek(Fd_t(fd), Filedelta_t(offset), wasiWhence, &newoffset)
+	errno := Fd_seek(Fd_t(fd), Filedelta_t(offset), Whence_t(whence), &newoffset)
 	return int64(newoffset), errnoErr(errno)
 }
 
