@@ -286,7 +286,11 @@ func Getppid() int {
 
 func Gettimeofday(tv *Timeval) error { return ENOSYS }
 
-func Kill(pid int, signum Signal) error { return ENOSYS }
+func Kill(pid int, signum Signal) error {
+    ProcExit(128+int32(signum))
+    return ENOSYS
+}
+
 func Sendfile(outfd int, infd int, offset *int64, count int) (written int, err error) {
 	return 0, ENOSYS
 }

@@ -365,7 +365,6 @@ func preparePath(path string, followTrailingSymlink bool) (*byte, size_t) {
 		}
 	}
 
-    // Oh my
 	return &[]byte("." + resolvedPath)[0], size_t(1 + len(resolvedPath))
 }
 

@@ -48,11 +48,7 @@ func (f *File) readdir(n int, mode readdirMode) (names []string, dirents []DirEn
 	// If this file has no dirinfo, create one.
 	if f.dirinfo == nil {
 		f.dirinfo = new(dirInfo)
-        //FIXME: f.dirinfo.buf = dirBufPool.Get().(*[]byte)
-        println("blop")
-        buf := make([]byte, 1024)
-        println("blop")
-        f.dirinfo.buf = &buf
+        f.dirinfo.buf = dirBufPool.Get().(*[]byte)
 	}
 	d := f.dirinfo
 
