@@ -16,9 +16,9 @@ if [[ $RUNTIME == "wazero" ]]; then
 	if [[ $DEBUG == "true" ]]; then
 		ARGS="-hostlogging=clock,exit,filesystem,memory,poll,random"
 	fi
-	echo "Running with wazero"
+	echo "Running with wazero: $PWD"
 	exec wazero run -env PWD=/ -mount $PWD:/ $ARGS $1 -- "${@:2}"
 else
-	echo "Running with wasmtime"
+	echo "Running with wasmtime: $PWD"
 	exec wasmtime --dir=/ --env=PWD=$PWD $1 -- "${@:2}"
 fi

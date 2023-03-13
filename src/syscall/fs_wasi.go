@@ -49,6 +49,10 @@ type Stat_t struct {
 	Ctime    Timestamp_t
 
 	Mode int // FIXME
+
+	// Uid and Gid are always zero on wasi platforms
+	Uid uint32
+	Gid uint32
 }
 
 type Fdstat_t struct {
@@ -410,14 +414,14 @@ func Open(path string, openmode int, perm uint32) (int, error) {
 		oflags |= OFLAG_EXCL
 	}
 
-    // Remove when https://github.com/bytecodealliance/wasmtime/pull/4967 is merged.
-    st := &Stat_t{}
-    if err := Stat(path, st); err != nil && err != ENOENT {
-        return 0, err
-    }
-    if st.Filetype == FILETYPE_DIRECTORY {
-        oflags |= OFLAG_DIRECTORY
-    }
+	// Remove when https://github.com/bytecodealliance/wasmtime/pull/4967 is merged.
+	st := &Stat_t{}
+	if err := Stat(path, st); err != nil && err != ENOENT {
+		return 0, err
+	}
+	if st.Filetype == FILETYPE_DIRECTORY {
+		oflags |= OFLAG_DIRECTORY
+	}
 
 	var rights = rootRightsFile
 	switch {
@@ -478,7 +482,7 @@ func Mkdir(path string, perm uint32) error {
 		return errnoErr(errno)
 	}
 	// FIXME: matches rights to perm
-    // Not all WASM runtime support rights so we ignore the potential error.
+	// Not all WASM runtime support rights so we ignore the potential error.
 	_ = Fd_fdstat_set_rights(rootFD, RIGHT_FULL, RIGHT_FULL)
 	return nil
 }

@@ -10,24 +10,24 @@ import (
 	"internal/itoa"
 	"internal/oserror"
 	"sync"
-    "unsafe"
+	"unsafe"
 )
 
 type Dirent struct {
-    // The offset of the next directory entry stored in this directory.
-	Next   Dircookie_t
-    // The serial number of the file referred to by this directory entry.
-	Ino    Inode_t
-    // The length of the name of the directory entry.
+	// The offset of the next directory entry stored in this directory.
+	Next Dircookie_t
+	// The serial number of the file referred to by this directory entry.
+	Ino Inode_t
+	// The length of the name of the directory entry.
 	Namlen uint32
-    // The type of the file referred to by this directory entry.
-	Type   Filetype_t
-    // Name of the directory entry.
-	Name   *byte
+	// The type of the file referred to by this directory entry.
+	Type Filetype_t
+	// Name of the directory entry.
+	Name *byte
 }
 
 func direntIno(buf []byte) (uint64, bool) {
-    return readInt(buf, unsafe.Offsetof(Dirent{}.Ino), unsafe.Sizeof(Dirent{}.Ino))
+	return readInt(buf, unsafe.Offsetof(Dirent{}.Ino), unsafe.Sizeof(Dirent{}.Ino))
 }
 
 func direntReclen(buf []byte) (uint64, bool) {
@@ -36,9 +36,9 @@ func direntReclen(buf []byte) (uint64, bool) {
 }
 
 func direntNamlen(buf []byte) (uint64, bool) {
-    return readInt(buf, unsafe.Offsetof(Dirent{}.Namlen), unsafe.Sizeof(Dirent{}.Namlen))
+	return readInt(buf, unsafe.Offsetof(Dirent{}.Namlen), unsafe.Sizeof(Dirent{}.Namlen))
 }
-    
+
 const PathMax = 256
 
 // An Errno is an unsigned number describing an error condition.
@@ -284,21 +284,38 @@ func Getppid() int {
 	return 2
 }
 
-func Gettimeofday(tv *Timeval) error { return ENOSYS }
+func Gettimeofday(tv *Timeval) error {
+	var time timestamp
+	if errno := clockTimeGet(clockRealtime, 1e3, &time); errno != 0 {
+		return errno
+	}
+	tv.setTimestamp(time)
+	return nil
+}
 
 func Kill(pid int, signum Signal) error {
-    ProcExit(128+int32(signum))
-    return ENOSYS
+	ProcExit(128 + int32(signum))
+	return nil
 }
 
 func Sendfile(outfd int, infd int, offset *int64, count int) (written int, err error) {
 	return 0, ENOSYS
 }
+
 func StartProcess(argv0 string, argv []string, attr *ProcAttr) (pid int, handle uintptr, err error) {
 	return 0, 0, ENOSYS
 }
+
 func Wait4(pid int, wstatus *WaitStatus, options int, rusage *Rusage) (wpid int, err error) {
 	return 0, ENOSYS
+}
+
+// TODO: figure out how to do umask emulation?
+var umask int
+
+func Umask(mask int) int {
+	umask, mask = mask, umask
+	return mask
 }
 
 type Iovec struct{} // dummy
@@ -308,9 +325,27 @@ type Timespec struct {
 	Nsec int64
 }
 
+func (ts *Timespec) timestamp() timestamp {
+	return timestamp(ts.Sec*1e9) + timestamp(ts.Nsec)
+}
+
+func (ts *Timespec) setTimestamp(t timestamp) {
+	ts.Sec = int64(t / 1e9)
+	ts.Nsec = int64(t % 1e9)
+}
+
 type Timeval struct {
 	Sec  int64
 	Usec int64
+}
+
+func (tv *Timeval) timestamp() timestamp {
+	return timestamp(tv.Sec*1e9) + timestamp(tv.Usec*1e3)
+}
+
+func (tv *Timeval) setTimestamp(t timestamp) {
+	tv.Sec = int64(t / 1e9)
+	tv.Usec = int64((t % 1e9) / 1e3)
 }
 
 func setTimespec(sec, nsec int64) Timespec {
