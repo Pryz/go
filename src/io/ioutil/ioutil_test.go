@@ -9,6 +9,7 @@ import (
 	. "io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -69,6 +70,9 @@ func TestWriteFile(t *testing.T) {
 func TestReadOnlyWriteFile(t *testing.T) {
 	if os.Getuid() == 0 {
 		t.Skipf("Root can write to read-only files anyway, so skip the read-only test.")
+	}
+	if runtime.GOOS == "wasi" {
+		t.Skip("file permissions are not supported by wasi")
 	}
 
 	// We don't want to use TempFile directly, since that opens a file for us as 0600.

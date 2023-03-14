@@ -12,13 +12,13 @@ done
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 if [[ $RUNTIME == "wazero" ]]; then
-	ARGS=""
-	if [[ $DEBUG == "true" ]]; then
-		ARGS="-hostlogging=clock,exit,filesystem,memory,poll,random"
-	fi
+    if [[ $LOG == "all" ]]; then
+        LOG=clock,exit,filesystem,memory,poll,random
+    fi
 	echo "Running with wazero: $PWD"
-	exec wazero run -env PWD=${PWD#"$GOROOT"} -env GOROOT=/ -mount $GOROOT:/ $ARGS $1 -- "${@:2}"
+	mkdir -p "${GOROOT}/tmp"
+	exec wazero run -env PWD=${PWD#"$GOROOT"} -env GOROOT=/ -mount "$GOROOT:/" -hostlogging=$LOG $1 -- "${@:2}"
 else
 	echo "Running with wasmtime: $PWD"
-	exec wasmtime --dir=/ --env=PWD=$PWD $1 -- "${@:2}"
+	exec wasmtime run --env PWD=/ --env GOROOT="$GOROOT" --dir / $1 -- "${@:2}"
 fi

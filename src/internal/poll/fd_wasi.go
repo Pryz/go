@@ -11,7 +11,7 @@ import (
 	"io"
 	"sync/atomic"
 	"syscall"
-    "unsafe"
+	"unsafe"
 )
 
 // ReadDir wraps syscall.ReadDir.
@@ -38,28 +38,47 @@ func (fd *FD) ReadDir(buf []byte, cookie syscall.Dircookie_t) (int, error) {
 }
 
 func (fd *FD) ReadDirent(buf []byte) (int, error) {
-    n, err := fd.ReadDir(buf, fd.next)
-    if err != nil {
-        return 0, err
-    }
-    if n <= 0 {
-        return n, nil
-    }
+	n, err := fd.ReadDir(buf, fd.next)
+	if err != nil {
+		return 0, err
+	}
+	if n <= 0 {
+		return n, nil // EOF
+	}
 
-    next, ok := direntNext(buf)
-    if ok {
-        fd.next = syscall.Dircookie_t(next)
-    }
+	// We assume that the caller of ReadDirent will consume the entire buffer
+	// up to the last full entry, so we scan through the buffer looking for the
+	// value of the last next cookie.
+	for b := buf[:n]; len(b) > 0; {
+		next, ok := direntNext(b)
+		if !ok {
+			break
+		}
+		size, ok := direntReclen(b)
+		if !ok {
+			break
+		}
+		if size > uint64(len(b)) {
+			break
+		}
+		fd.next = syscall.Dircookie_t(next)
+		b = b[size:]
+	}
 
-    return n, nil
+	return n, nil
 }
 
-func (fd *FD) Next() syscall.Dircookie_t {
-    return fd.next
+func direntReclen(buf []byte) (uint64, bool) {
+	namelen, ok := direntNamlen(buf)
+	return 24 + namelen, ok
+}
+
+func direntNamlen(buf []byte) (uint64, bool) {
+	return readInt(buf, unsafe.Offsetof(syscall.Dirent{}.Namlen), unsafe.Sizeof(syscall.Dirent{}.Namlen))
 }
 
 func direntNext(buf []byte) (uint64, bool) {
-    return readInt(buf, unsafe.Offsetof(syscall.Dirent{}.Next), unsafe.Sizeof(syscall.Dirent{}.Next))
+	return readInt(buf, unsafe.Offsetof(syscall.Dirent{}.Next), unsafe.Sizeof(syscall.Dirent{}.Next))
 }
 
 // readInt returns the size-bytes unsigned integer in native byte order at offset off.
@@ -142,7 +161,7 @@ type FD struct {
 	// Whether this is a file rather than a network socket.
 	isFile bool
 
-    next syscall.Dircookie_t
+	next syscall.Dircookie_t
 }
 
 // Init initializes the FD. The Sysfd field should already be set.

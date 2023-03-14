@@ -173,6 +173,8 @@ const (
 	ETXTBSY         Errno = 74
 	EXDEV           Errno = 75
 	ENOTCAPABLE     Errno = 76
+	// needed by src/net/error_unix_test.go
+	EOPNOTSUPP = ENOTSUP
 )
 
 // TODO: Auto-generate some day. (Hard-coded in binaries so not likely to change.)

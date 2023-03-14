@@ -348,14 +348,12 @@ func Remove(name string) error {
 func tempDir() string {
 	dir := Getenv("TMPDIR")
 	if dir == "" {
-        switch runtime.GOOS {
-        case "android":
-            dir = "/data/local/tmp"
-        case "wasi":
-            dir = "/"
-        default:
-            dir = "/tmp"
-        }
+		switch runtime.GOOS {
+		case "android":
+			dir = "/data/local/tmp"
+		default:
+			dir = "/tmp"
+		}
 	}
 	return dir
 }
