@@ -13,19 +13,19 @@ import (
 
 type uintptr_t uint32
 
-// https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-size-u32
+// https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-size-u32
 type size_t uint32
 
-// https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-errno-variant
+// https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-errno-variant
 type __wasi_errno_t uint32
 
-// https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-timestamp-u64
+// https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-timestamp-u64
 type __wasi_timestamp_t uint64
 
-// https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-fd-handle
+// https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd-handle
 type __wasi_fd_t uint32
 
-// https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-clockid-variant
+// https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-clockid-variant
 type __wasi_clockid_t uint32
 
 const (
@@ -35,13 +35,13 @@ const (
 	__WASI_CLOCK_THREAD_CPUTIME_ID  __wasi_clockid_t = 3
 )
 
-// https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-iovec-record
+// https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-iovec-record
 type __wasi_iovec_t struct {
 	buf     uintptr_t
 	buf_len size_t
 }
 
-// https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-ciovec-record
+// https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-ciovec-record
 type __wasi_ciovec_t struct {
 	buf     uintptr_t
 	buf_len size_t

@@ -673,7 +673,7 @@ func (dir dirFS) join(name string) (string, error) {
 		return "", errors.New("os: DirFS with empty root")
 	}
 	//if !fs.ValidPath(name) {
-    //    panic(name)
+	//    panic(name)
 	//	return "", ErrInvalid
 	//}
 	name, err := safefilepath.FromFS(name)

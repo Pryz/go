@@ -108,7 +108,7 @@ const (
 
 	RIGHT_FULL Rights_t = Rights_t(^uint32(0))
 
-	// https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-filetype-variant
+	// https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-filetype-variant
 	FILETYPE_UNKNOWN          Filetype_t = 0
 	FILETYPE_BLOCK_DEVICE     Filetype_t = 1
 	FILETYPE_CHARACTER_DEVICE Filetype_t = 2
@@ -128,14 +128,14 @@ const (
 	FILESTAT_SET_MTIM_NOW Fstflags_t = 0x0008
 )
 
-// https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-fd_closefd-fd---result-errno
+// https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd_closefd-fd---result-errno
 //
 //go:wasmimport wasi_snapshot_preview1 fd_close
 func Fd_close(
 	fd Fd_t,
 ) Errno
 
-// https://github.com/ebAssembly/WASI/blob/main/phases/snapshot/docs.md#-fd_filestat_set_sizefd-fd-size-filesize---result-errno
+// https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd_filestat_set_sizefd-fd-size-filesize---result-errno
 //
 //go:wasmimport wasi_snapshot_preview1 fd_filestat_set_size
 func Fd_filestat_set_size(
@@ -143,7 +143,7 @@ func Fd_filestat_set_size(
 	st_size Filesize_t,
 ) Errno
 
-// https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-fd_preadfd-fd-iovs-iovec_array-offset-filesize---resultsize-errno
+// https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd_preadfd-fd-iovs-iovec_array-offset-filesize---resultsize-errno
 //
 //go:wasmimport wasi_snapshot_preview1 fd_pread
 func Fd_pread(
@@ -194,7 +194,7 @@ func Fd_fdstat_get(
 	buf *Fdstat_t,
 ) Errno
 
-// https://github.com/WebAssembly/WASI/blob/main/phases/snapshot/docs.md#-fd_fdstat_set_rightsfd-fd-fs_rights_base-rights-fs_rights_inheriting-rights---result-errno
+// https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd_fdstat_set_rightsfd-fd-fs_rights_base-rights-fs_rights_inheriting-rights---result-errno
 //
 //go:wasmimport wasi_snapshot_preview1 fd_fdstat_set_rights
 func Fd_fdstat_set_rights(

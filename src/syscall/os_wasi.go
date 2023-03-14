@@ -6,5 +6,5 @@ func __wasi_proc_exit(
 )
 
 func ProcExit(code int32) {
-    __wasi_proc_exit(code)
+	__wasi_proc_exit(code)
 }
