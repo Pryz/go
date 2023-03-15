@@ -19,6 +19,9 @@ type size_t uint32
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-errno-variant
 type __wasi_errno_t uint32
 
+// https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-filesize-u64
+type __wasi_filesize_t uint64
+
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-timestamp-u64
 type __wasi_timestamp_t uint64
 
@@ -107,6 +110,71 @@ func __wasi_random_get(
 	buf_len size_t,
 ) __wasi_errno_t
 
+type __wasi_eventtype_t uint8
+
+const (
+	__wasi_eventtype_clock __wasi_eventtype_t = iota
+	__wasi_eventtype_fd_read
+	__wasi_eventtype_fd_write
+)
+
+type __wasi_eventrwflags_t uint16
+
+const (
+	__wasi_fd_readwrite_hangup __wasi_eventrwflags_t = 1 << iota
+)
+
+type __wasi_userdata_t uint64
+
+type __wasi_event_t struct {
+	userdata    __wasi_userdata_t
+	error       uint16 // TODO: this should be __wasi_errno_t but the compiler rejects uint16 as argument to imported functions
+	typ         __wasi_eventtype_t
+	fdReadwrite __wasi_event_fd_readwrite_t
+}
+
+type __wasi_event_fd_readwrite_t struct {
+	nbytes __wasi_filesize_t
+	flags  __wasi_eventrwflags_t
+}
+
+type __wasi_subclockflags_t uint16
+
+const (
+	__wasi_subscription_clock_abstime __wasi_subclockflags_t = 1 << iota
+)
+
+type __wasi_subscription_clock_t struct {
+	id        __wasi_clockid_t
+	timeout   __wasi_timestamp_t
+	precision __wasi_timestamp_t
+	flags     __wasi_subclockflags_t
+}
+
+type __wasi_subscription_t struct {
+	userdata __wasi_userdata_t
+	u        __wasi_subscription_u
+}
+
+type __wasi_subscription_u [5]uint64
+
+func (u *__wasi_subscription_u) __wasi_eventtype_t() *__wasi_eventtype_t {
+	return (*__wasi_eventtype_t)(unsafe.Pointer(&u[0]))
+}
+
+func (u *__wasi_subscription_u) __wasi_subscription_clock_t() *__wasi_subscription_clock_t {
+	return (*__wasi_subscription_clock_t)(unsafe.Pointer(&u[1]))
+}
+
+//go:wasmimport wasi_snapshot_preview1 poll_oneoff
+//go:noescape
+func __wasi_poll_oneoff(
+	in *__wasi_subscription_t,
+	out *__wasi_event_t,
+	nsubscriptions size_t,
+	nevents *size_t,
+) __wasi_errno_t
+
 func exit(code int32) {
 	__wasi_proc_exit(code)
 }
@@ -131,7 +199,23 @@ func open(name *byte, mode, perm int32) int32        { panic("not implemented") 
 func closefd(fd int32) int32                         { panic("not implemented") }
 func read(fd int32, p unsafe.Pointer, n int32) int32 { panic("not implemented") }
 
-func usleep(usec uint32)
+func usleep(usec uint32) {
+	var in __wasi_subscription_t
+	var out __wasi_event_t
+	var nevents size_t
+
+	eventtype := in.u.__wasi_eventtype_t()
+	*eventtype = __wasi_eventtype_clock
+
+	subscription := in.u.__wasi_subscription_clock_t()
+	subscription.id = __WASI_CLOCK_MONOTONIC
+	subscription.timeout = __wasi_timestamp_t(usec) * 1e3
+	subscription.precision = 1e3
+
+	if __wasi_poll_oneoff(&in, &out, 1, &nevents) != 0 {
+		throw("wasi_snapshot_preview1.poll_oneoff")
+	}
+}
 
 //go:nosplit
 func usleep_no_g(usec uint32) {

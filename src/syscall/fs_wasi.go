@@ -338,83 +338,37 @@ func init() {
 	rootRightsFile = stat.RightsInheriting
 
 	wd, _ = Getenv("PWD")
-	// TODO: figure out if it is oK for PWD to not be an absolute path
-	// TODO: figure out if it is OK to default to the root directory
-	if wd == "" {
-		wd = "/"
-	}
 }
 
 // Provided by package runtime.
 func now() (sec int64, nsec int32)
 
 func preparePath(path string, followTrailingSymlink bool) (*byte, size_t) {
-	if path == "" {
-		return nil, 0
+	if path == "" || path[0] != '/' {
+		path = wd + "/" + path
 	}
 
-	abs := strings.HasPrefix(path, "/")
-	cap := len(path)
-	if abs {
-		cap += len(wd) + 1
-	}
-	buf := make([]byte, 0, cap)
-	if !abs {
-		buf = append(buf, wd...)
-	}
-
-	for {
-		for strings.HasPrefix(path, "/") {
-			path = path[1:]
-		}
-
-		if path == "" {
+	parts := strings.Split(path[1:], "/")
+	resolvedPath := ""
+	for i, part := range parts {
+		resolvedPath += "/" + part
+		if i == len(parts)-1 && !followTrailingSymlink {
 			break
 		}
-
-		i := strings.IndexByte(path, '/')
-		if i < 0 {
-			i = len(path)
-		}
-
-		if path[:i] != "." {
-			buf = append(buf, '/')
-			buf = append(buf, path[:i]...)
-		}
-
-		path = path[i:]
-	}
-
-	if len(buf) == 0 {
-		buf = append(buf, '/')
-	}
-
-	return &buf[0], size_t(len(buf))
-
-	// TODO: figure out if it is OK to leave symlink resolution to the runtime
-	/*
-		parts := strings.Split(path[1:], "/")
-		resolvedPath := ""
-		for i, part := range parts {
-			resolvedPath += "/" + part
-			if i == len(parts)-1 && !followTrailingSymlink {
+		for {
+			dest, err := readlink("." + resolvedPath)
+			if err != nil {
 				break
 			}
-			for {
-				dest, err := readlink("." + resolvedPath)
-				if err != nil {
-					break
-				}
-				if dest[0] != '/' {
-					i := strings.LastIndexByte(resolvedPath, '/')
-					dest = resolvedPath[:i] + "/" + dest
-				}
-				resolvedPath = dest
+			if dest[0] != '/' {
+				i := strings.LastIndexByte(resolvedPath, '/')
+				dest = resolvedPath[:i] + "/" + dest
 			}
+			resolvedPath = dest
 		}
+	}
 
-		return &[]byte("." + resolvedPath)[0], size_t(1 + len(resolvedPath))
-	*/
+	return &[]byte("." + resolvedPath)[0], size_t(1 + len(resolvedPath))
 }
 
 func readlink(path string) (string, error) {
@@ -480,7 +434,6 @@ func Open(path string, openmode int, perm uint32) (int, error) {
 
 	var fdflags Fdflags_t
 	if openmode&O_APPEND != 0 {
-		// TODO: figure out why this is commented
 		//fdflags |= FDFLAG_APPEN
 	}
 	if openmode&O_SYNC != 0 {
@@ -492,7 +445,7 @@ func Open(path string, openmode int, perm uint32) (int, error) {
 	var fd Fd_t
 	errno := Path_open(
 		rootFD,
-		LOOKUP_SYMLINK_FOLLOW,
+		0,
 		path_ptr,
 		path_len,
 		oflags,
@@ -527,7 +480,6 @@ func Mkdir(path string, perm uint32) error {
 	if errno := Path_create_directory(rootFD, path_ptr, path_len); errno != 0 {
 		return errnoErr(errno)
 	}
-	// TODO: figure out why the root fd is being used here
 	// FIXME: matches rights to perm
 	// Not all WASM runtime support rights so we ignore the potential error.
 	_ = Fd_fdstat_set_rights(rootFD, RIGHT_FULL, RIGHT_FULL)
@@ -546,7 +498,7 @@ func ReadDir(fd int, buf []byte, cookie Dircookie_t) (int, error) {
 
 func Stat(path string, st *Stat_t) error {
 	path_ptr, path_len := preparePath(path, true)
-	errno := Path_filestat_get(rootFD, LOOKUP_SYMLINK_FOLLOW, path_ptr, path_len, st)
+	errno := Path_filestat_get(rootFD, 0, path_ptr, path_len, st)
 	return errnoErr(errno)
 }
 

@@ -1239,10 +1239,8 @@ func (c *common) TempDir() string {
 	}
 
 	dir := fmt.Sprintf("%s%c%03d", c.tempDir, os.PathSeparator, seq)
-	fmt.Println(dir)
-	//if err := os.Mkdir(dir, 0777); err != nil {
-	if err := os.MkdirAll(dir, 0777); err != nil {
-		c.Fatalf("blah TempDir: %v", err)
+	if err := os.Mkdir(dir, 0777); err != nil {
+		c.Fatalf("TempDir: %v", err)
 	}
 	return dir
 }

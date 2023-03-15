@@ -30,7 +30,9 @@ func read(fd int32, p unsafe.Pointer, n int32) int32 { panic("not implemented") 
 //go:noescape
 func wasmWrite(fd uintptr, p unsafe.Pointer, n int32)
 
-func usleep(usec uint32)
+func usleep(usec uint32) {
+	// TODO(neelance): implement usleep
+}
 
 //go:nosplit
 func usleep_no_g(usec uint32) {
