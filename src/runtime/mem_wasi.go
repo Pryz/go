@@ -6,6 +6,22 @@
 
 package runtime
 
-// Stub so we can compile the code on both js and wasi, but there is no memory
-// data view to reset on wasi.
-func resetMemoryDataView() {}
+import "unsafe"
+
+// https://webassembly.github.io/spec/core/exec/runtime.html#memory-instances
+const _PAGESIZE = 64 * 1024
+
+func sbrk(n uintptr) unsafe.Pointer {
+	grow := (int32(n) + _PAGESIZE - 1) / _PAGESIZE
+	size := currentMemory()
+
+	if growMemory(grow) < 0 {
+		return nil
+	}
+
+	return unsafe.Pointer(uintptr(size) * _PAGESIZE)
+}
+
+// Implemented in src/runtime/sys_wasm.s
+func currentMemory() int32
+func growMemory(pages int32) int32
