@@ -103,13 +103,6 @@ func unminit() {
 func mdestroy(mp *m) {
 }
 
-func osinit() {
-	initBloc()
-	ncpu = 1
-	getg().m.procid = 2
-	physPageSize = _PAGESIZE
-}
-
 // wasm has no signals
 const _NSIG = 0
 

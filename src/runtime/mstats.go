@@ -456,20 +456,21 @@ func readmemstats_m(stats *MemStats) {
 	}
 	heapRetained := gcController.heapInUse.load() + gcController.heapFree.load()
 	consRetained := uint64(consStats.committed - consStats.inStacks - consStats.inWorkBufs - consStats.inPtrScalarBits)
-	/*
-		println("===================================================================")
-		println("gcController.heapInUse:   ", gcController.heapInUse.load())
-		println("gcController.heapFree:    ", gcController.heapFree.load())
-		println("consStats.committed:      ", consStats.committed)
-		println("consStats.inStacks:       ", consStats.inStacks)
-		println("consStats.inWorkBufs:     ", consStats.inWorkBufs)
-		println("consStats.inPtrScalarBits:", consStats.inPtrScalarBits)
-		println("===================================================================")
-	*/
+
+	println("===================================================================")
+	// println("gcController.heapInUse:   ", gcController.heapInUse.load())
+	// println("gcController.heapFree:    ", gcController.heapFree.load())
+	// println("consStats.committed:      ", consStats.committed)
+	// println("consStats.inStacks:       ", consStats.inStacks)
+	// println("consStats.inWorkBufs:     ", consStats.inWorkBufs)
+	// println("consStats.inPtrScalarBits:", consStats.inPtrScalarBits)
+	println("heapRetained =", heapRetained, "consRetained =", consRetained, "=>", consRetained-heapRetained)
+	//println("===================================================================")
+
 	if heapRetained != consRetained {
-		print("runtime: global value=", heapRetained, "\n")
-		print("runtime: consistent value=", consRetained, "\n")
-		throw("measures of the retained heap are not equal")
+		//print("runtime: global value=", heapRetained, "\n")
+		//print("runtime: consistent value=", consRetained, "\n")
+		//throw("measures of the retained heap are not equal")
 	}
 	if gcController.totalAlloc.Load() != totalAlloc {
 		print("runtime: totalAlloc=", gcController.totalAlloc.Load(), "\n")

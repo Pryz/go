@@ -283,12 +283,6 @@ func mdestroy(mp *m) {
 	// FIXME
 }
 
-func osinit() {
-	ncpu = 1
-	getg().m.procid = 2
-	physPageSize = 64 * 1024
-}
-
 // wasm has no signals
 const _NSIG = 0
 
