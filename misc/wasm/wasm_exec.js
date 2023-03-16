@@ -189,7 +189,7 @@
 			const loadSlice = (addr) => {
 				const array = getInt64(addr + 0);
 				const len = getInt64(addr + 8);
-				return new Uint8Array(this._inst.exports.mem.buffer, array, len);
+				return new Uint8Array(this._inst.exports.memory.buffer, array, len);
 			}
 
 			const loadSliceOfValues = (addr) => {
@@ -205,7 +205,7 @@
 			const loadString = (addr) => {
 				const saddr = getInt64(addr + 0);
 				const len = getInt64(addr + 8);
-				return decoder.decode(new DataView(this._inst.exports.mem.buffer, saddr, len));
+				return decoder.decode(new DataView(this._inst.exports.memory.buffer, saddr, len));
 			}
 
 			const timeOrigin = Date.now() - performance.now();
@@ -238,13 +238,13 @@
 						const fd = getInt64(sp + 8);
 						const p = getInt64(sp + 16);
 						const n = this.mem.getInt32(sp + 24, true);
-						fs.writeSync(fd, new Uint8Array(this._inst.exports.mem.buffer, p, n));
+						fs.writeSync(fd, new Uint8Array(this._inst.exports.memory.buffer, p, n));
 					},
 
 					// func resetMemoryDataView()
 					"runtime.resetMemoryDataView": (sp) => {
 						sp >>>= 0;
-						this.mem = new DataView(this._inst.exports.mem.buffer);
+						this.mem = new DataView(this._inst.exports.memory.buffer);
 					},
 
 					// func nanotime1() int64
@@ -467,7 +467,7 @@
 				throw new Error("Go.run: WebAssembly.Instance expected");
 			}
 			this._inst = instance;
-			this.mem = new DataView(this._inst.exports.mem.buffer);
+			this.mem = new DataView(this._inst.exports.memory.buffer);
 			this._values = [ // JS values that Go currently has references to, indexed by reference id
 				NaN,
 				0,

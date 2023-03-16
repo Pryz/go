@@ -451,15 +451,26 @@ func writeGlobalSec(ctxt *ld.Link) {
 func writeExportSec(ctxt *ld.Link, ldr *loader.Loader, lenHostImports int) {
 	sizeOffset := writeSecHeader(ctxt, sectionExport)
 
-	writeUleb128(ctxt.Out, 2) // number of exports
+	switch buildcfg.GOOS {
+	case "wasi":
+		writeUleb128(ctxt.Out, 2) // number of exports
+		s := ldr.Lookup("_rt0_wasm_wasi", 0)
+		idx := uint32(lenHostImports) + uint32(ldr.SymValue(s)>>16) - funcValueOffset
+		writeName(ctxt.Out, "_start")       // the wasi entrypoint
+		ctxt.Out.WriteByte(0x00)            // func export
+		writeUleb128(ctxt.Out, uint64(idx)) // funcidx
+	case "js":
+		writeUleb128(ctxt.Out, 4) // number of exports
+		for _, name := range []string{"run", "resume", "getsp"} {
+			s := ldr.Lookup("wasm_export_"+name, 0)
+			idx := uint32(lenHostImports) + uint32(ldr.SymValue(s)>>16) - funcValueOffset
+			writeName(ctxt.Out, name)           // inst.exports.run/resume/getsp in wasm_exec.js
+			ctxt.Out.WriteByte(0x00)            // func export
+			writeUleb128(ctxt.Out, uint64(idx)) // funcidx
+		}
+	}
 
-	s := ldr.Lookup("_rt0_wasm_wasi", 0)
-	idx := uint32(lenHostImports) + uint32(ldr.SymValue(s)>>16) - funcValueOffset
-	writeName(ctxt.Out, "_start")       // inst.exports.run/resume/getsp in wasm_exec.js
-	ctxt.Out.WriteByte(0x00)            // func export
-	writeUleb128(ctxt.Out, uint64(idx)) // funcidx
-
-	writeName(ctxt.Out, "memory") // inst.exports.mem in wasm_exec.js
+	writeName(ctxt.Out, "memory") // inst.exports.memory in wasm_exec.js and memory in wasi
 	ctxt.Out.WriteByte(0x02)      // mem export
 	writeUleb128(ctxt.Out, 0)     // memidx
 
