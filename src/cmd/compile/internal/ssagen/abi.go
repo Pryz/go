@@ -369,7 +369,6 @@ func CreateWasmImportWrapper(fn *ir.Func) bool {
 func toWasmFields(result *abi.ABIParamResultInfo, abiParams []abi.ABIParamAssignment) []obj.WasmField {
 	wfs := make([]obj.WasmField, len(abiParams))
 	for i, p := range abiParams {
-
 		t := p.Type
 		switch {
 		case t.IsInteger() && t.Size() == 4:
