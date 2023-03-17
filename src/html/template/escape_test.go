@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"text/template"
@@ -1847,11 +1846,7 @@ func TestIndirectPrint(t *testing.T) {
 
 // This is a test for issue 3272.
 func TestEmptyTemplateHTML(t *testing.T) {
-	emptyFilePath := filepath.Join(t.TempDir(), "empty")
-	if err := os.WriteFile(emptyFilePath, nil, 0666); err != nil {
-		t.Fatal(err)
-	}
-	page := Must(New("page").ParseFiles(emptyFilePath))
+	page := Must(New("page").ParseFiles(os.DevNull))
 	if err := page.ExecuteTemplate(os.Stdout, "page", "nothing"); err == nil {
 		t.Fatal("expected error")
 	}

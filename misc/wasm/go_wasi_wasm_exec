@@ -17,8 +17,8 @@ if [[ $RUNTIME == "wazero" ]]; then
 	fi
 	echo "Running with wazero: $PWD"
 	mkdir -p "${GOROOT}/tmp"
-	exec wazero run -env PWD=${PWD#"$GOROOT"} -env GOROOT=/ -mount $GOROOT:/ -hostlogging "$LOG" $1 -- "${@:2}"
+	exec wazero run -mount /:/ -env PWD=$PWD -env GOROOT=$GOROOT -hostlogging "$LOG" $1 -- "${@:2}"
 else
 	echo "Running with wasmtime: $PWD"
-	exec wasmtime --dir=/ --env=PWD=$PWD $1 -- "${@:2}"
+	exec wasmtime --dir=/ --env GOROOT=$GOROOT --env=PWD=$PWD $1 -- "${@:2}"
 fi

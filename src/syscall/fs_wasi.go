@@ -7,7 +7,6 @@
 package syscall
 
 import (
-	"strings"
 	"sync"
 	"unsafe"
 )
@@ -343,14 +342,48 @@ func init() {
 // Provided by package runtime.
 func now() (sec int64, nsec int32)
 
+func isAbs(path string) bool {
+	return len(path) > 0 && path[0] == '/'
+}
+
+func skipPathSeparator(path string) string {
+	i := 0
+	for i < len(path) && path[i] == '/' {
+		i++
+	}
+	return path[i:]
+}
+
+func walkPath(path string) (root, tail string) {
+	if isAbs(path) {
+		return "/", skipPathSeparator(path)
+	}
+	for i < len(path) && path[i] != '/' {
+		i++
+	}
+	return path[:i], skipPathSeparator(path[i:])
+}
+
+func dirPath(path string) string {
+	i := len(path)
+	for i > 0 && path[i-1] != '/' {
+		i--
+	}
+	if i == 0 {
+		return "/"
+	}
+	return path[:i]
+}
+
 func preparePath(path string, followTrailingSymlink bool) (*byte, size_t) {
 	if path == "" || path[0] != '/' {
 		path = wd + "/" + path
 	}
 
-	parts := strings.Split(path[1:], "/")
-	resolvedPath := ""
-	for i, part := range parts {
+	var resolvedPath string
+	for {
+		var part string
+		part, path = walkPath(path)
 		resolvedPath += "/" + part
 		if i == len(parts)-1 && !followTrailingSymlink {
 			break
@@ -361,8 +394,7 @@ func preparePath(path string, followTrailingSymlink bool) (*byte, size_t) {
 				break
 			}
 			if dest[0] != '/' {
-				i := strings.LastIndexByte(resolvedPath, '/')
-				dest = resolvedPath[:i] + "/" + dest
+				dest = dirPath(resolvedPath) + "/" + dest
 			}
 			resolvedPath = dest
 		}

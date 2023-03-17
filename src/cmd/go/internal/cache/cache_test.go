@@ -152,7 +152,7 @@ func dummyID(x int) [HashSize]byte {
 }
 
 func TestCacheTrim(t *testing.T) {
-	if runtime.GOOS == "js" {
+	if runtime.GOOS == "js" || runtime.GOOS == "wasi" {
 		testenv.SkipFlaky(t, 35220)
 	}
 
