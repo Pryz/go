@@ -260,6 +260,8 @@ var errorstr = [...]string{
 // Do the interface allocations only once for common
 // Errno values.
 var (
+	errENOSYS error = ENOSYS
+	errEBADF  error = EBADF
 	errEAGAIN error = EAGAIN
 	errEINVAL error = EINVAL
 	errENOENT error = ENOENT
@@ -267,6 +269,8 @@ var (
 
 // errnoErr returns common boxed Errno values, to prevent
 // allocations at runtime.
+//
+//go:noinline
 func errnoErr(e Errno) error {
 	switch e {
 	case 0:
