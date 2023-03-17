@@ -557,6 +557,9 @@ func CloseOnExec(fd int) {
 }
 
 func Mkdir(path string, perm uint32) error {
+	if path == "" {
+		return EINVAL
+	}
 	dirfd, path_ptr, path_len := preparePath(path)
 	if errno := Path_create_directory(dirfd, path_ptr, path_len); errno != 0 {
 		return errnoErr(errno)
@@ -582,12 +585,18 @@ func ReadDir(fd int, buf []byte, cookie Dircookie_t) (int, error) {
 }
 
 func Stat(path string, st *Stat_t) error {
+	if path == "" {
+		return EINVAL
+	}
 	dirfd, path_ptr, path_len := preparePath(path)
 	errno := Path_filestat_get(dirfd, LOOKUP_SYMLINK_FOLLOW, path_ptr, path_len, st)
 	return errnoErr(errno)
 }
 
 func Lstat(path string, st *Stat_t) error {
+	if path == "" {
+		return EINVAL
+	}
 	dirfd, path_ptr, path_len := preparePath(path)
 	// TODO(achille): the follow code would be the ideal implementation of this
 	// function but wazero does not yet handle the lookup flags and assumes to
@@ -628,12 +637,18 @@ func Fstat(fd int, st *Stat_t) error {
 }
 
 func Unlink(path string) error {
+	if path == "" {
+		return EINVAL
+	}
 	dirfd, path_ptr, path_len := preparePath(path)
 	errno := Path_unlink_file(dirfd, path_ptr, path_len)
 	return errnoErr(errno)
 }
 
 func Rmdir(path string) error {
+	if path == "" {
+		return EINVAL
+	}
 	dirfd, path_ptr, path_len := preparePath(path)
 	errno := Path_remove_directory(dirfd, path_ptr, path_len)
 	return errnoErr(errno)
@@ -662,6 +677,9 @@ func Lchown(path string, uid, gid int) error {
 }
 
 func UtimesNano(path string, ts []Timespec) error {
+	if path == "" {
+		return EINVAL
+	}
 	dirfd, path_ptr, path_len := preparePath(path)
 	errno := Path_filestat_set_times(
 		dirfd,
@@ -676,6 +694,9 @@ func UtimesNano(path string, ts []Timespec) error {
 }
 
 func Rename(from, to string) error {
+	if from == "" || to == "" {
+		return EINVAL
+	}
 	old_dirfd, old_path, old_path_len := preparePath(from)
 	new_dirfd, new_path, new_path_len := preparePath(to)
 	errno := Path_rename(
@@ -690,6 +711,9 @@ func Rename(from, to string) error {
 }
 
 func Truncate(path string, length int64) error {
+	if path == "" {
+		return EINVAL
+	}
 	// We use O_APPEND here because it is the only way to get wazero to set the
 	// O_RDWR open flag on the open file, which is needed to truncate ta file,
 	// see ftruncate(2):
@@ -719,6 +743,9 @@ func Getwd() (string, error) {
 }
 
 func Chdir(path string) error {
+	if path == "" {
+		return EINVAL
+	}
 	//println("chdir:", path)
 	dirfd, path_ptr, path_len := preparePath(path)
 
@@ -761,6 +788,9 @@ func Fchdir(fd int) error {
 }
 
 func Readlink(path string, buf []byte) (n int, err error) {
+	if path == "" {
+		return 0, EINVAL
+	}
 	dirfd, path_ptr, path_len := preparePath(path)
 	var bufused size_t
 	errno := Path_readlink(
@@ -775,6 +805,9 @@ func Readlink(path string, buf []byte) (n int, err error) {
 }
 
 func Link(path, link string) error {
+	if path == "" || link == "" {
+		return EINVAL
+	}
 	old_dirfd, old_path, old_path_len := preparePath(path)
 	new_dirfd, new_path, new_path_len := preparePath(link)
 	errno := Path_link(
@@ -790,6 +823,9 @@ func Link(path, link string) error {
 }
 
 func Symlink(path, link string) error {
+	if path == "" || link == "" {
+		return EINVAL
+	}
 	dirfd, new_path, new_path_len := preparePath(link)
 	errno := Path_symlink(
 		&[]byte(path)[0],
