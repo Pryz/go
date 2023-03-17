@@ -130,6 +130,7 @@ const (
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd_closefd-fd---result-errno
 //
 //go:wasmimport wasi_snapshot_preview1 fd_close
+//go:noescape
 func Fd_close(
 	fd Fd_t,
 ) Errno
@@ -137,6 +138,7 @@ func Fd_close(
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd_filestat_set_sizefd-fd-size-filesize---result-errno
 //
 //go:wasmimport wasi_snapshot_preview1 fd_filestat_set_size
+//go:noescape
 func Fd_filestat_set_size(
 	fd Fd_t,
 	st_size Filesize_t,
@@ -145,6 +147,7 @@ func Fd_filestat_set_size(
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd_preadfd-fd-iovs-iovec_array-offset-filesize---resultsize-errno
 //
 //go:wasmimport wasi_snapshot_preview1 fd_pread
+//go:noescape
 func Fd_pread(
 	fd Fd_t,
 	iovs *Ciovec_t,
@@ -154,6 +157,7 @@ func Fd_pread(
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_pwrite
+//go:noescape
 func Fd_pwrite(
 	fd Fd_t,
 	iovs *Ciovec_t,
@@ -163,6 +167,7 @@ func Fd_pwrite(
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_read
+//go:noescape
 func Fd_read(
 	fd Fd_t,
 	iovs *Ciovec_t,
@@ -171,6 +176,7 @@ func Fd_read(
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_readdir
+//go:noescape
 func Fd_readdir(
 	fd Fd_t,
 	buf *byte,
@@ -180,6 +186,7 @@ func Fd_readdir(
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_seek
+//go:noescape
 func Fd_seek(
 	fd Fd_t,
 	offset Filedelta_t,
@@ -188,6 +195,7 @@ func Fd_seek(
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_fdstat_get
+//go:noescape
 func Fd_fdstat_get(
 	fd Fd_t,
 	buf *Fdstat_t,
@@ -196,6 +204,7 @@ func Fd_fdstat_get(
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd_fdstat_set_rightsfd-fd-fs_rights_base-rights-fs_rights_inheriting-rights---result-errno
 //
 //go:wasmimport wasi_snapshot_preview1 fd_fdstat_set_rights
+//go:noescape
 func Fd_fdstat_set_rights(
 	fd Fd_t,
 	rightsBase Rights_t,
@@ -203,12 +212,14 @@ func Fd_fdstat_set_rights(
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_filestat_get
+//go:noescape
 func Fd_filestat_get(
 	fd Fd_t,
 	buf *Stat_t,
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_write
+//go:noescape
 func Fd_write(
 	fd Fd_t,
 	iovs *Ciovec_t,
@@ -217,9 +228,11 @@ func Fd_write(
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_sync
+//go:noescape
 func Fd_sync(fd Fd_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_create_directory
+//go:noescape
 func Path_create_directory(
 	fd Fd_t,
 	path *byte,
@@ -227,6 +240,7 @@ func Path_create_directory(
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_filestat_get
+//go:noescape
 func Path_filestat_get(
 	fd Fd_t,
 	flags Lookupflags_t,
@@ -236,6 +250,7 @@ func Path_filestat_get(
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_filestat_set_times
+//go:noescape
 func Path_filestat_set_times(
 	fd Fd_t,
 	flags Lookupflags_t,
@@ -247,6 +262,7 @@ func Path_filestat_set_times(
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_link
+//go:noescape
 func Path_link(
 	old_fd Fd_t,
 	old_flags Lookupflags_t,
@@ -258,6 +274,7 @@ func Path_link(
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_readlink
+//go:noescape
 func Path_readlink(
 	fd Fd_t,
 	path *byte,
@@ -268,6 +285,7 @@ func Path_readlink(
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_remove_directory
+//go:noescape
 func Path_remove_directory(
 	fd Fd_t,
 	path *byte,
@@ -275,6 +293,7 @@ func Path_remove_directory(
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_rename
+//go:noescape
 func Path_rename(
 	old_fd Fd_t,
 	old_path *byte,
@@ -285,6 +304,7 @@ func Path_rename(
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_symlink
+//go:noescape
 func Path_symlink(
 	old_path *byte,
 	old_path_len size_t,
@@ -294,6 +314,7 @@ func Path_symlink(
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_unlink_file
+//go:noescape
 func Path_unlink_file(
 	fd Fd_t,
 	path *byte,
@@ -301,6 +322,7 @@ func Path_unlink_file(
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_open
+//go:noescape
 func Path_open(
 	rootFD Fd_t,
 	dirflags Lookupflags_t,
@@ -314,6 +336,7 @@ func Path_open(
 ) Errno
 
 //go:wasmimport wasi_snapshot_preview1 random_get
+//go:noescape
 func Random_get(
 	buf *byte,
 	buf_len size_t,
