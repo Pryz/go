@@ -216,6 +216,9 @@ func Fd_write(
 	nwritten *size_t,
 ) Errno
 
+//go:wasmimport wasi_snapshot_preview1 fd_sync
+func Fd_sync(fd Fd_t) Errno
+
 //go:wasmimport wasi_snapshot_preview1 path_create_directory
 func Path_create_directory(
 	fd Fd_t,
@@ -316,123 +319,134 @@ func Random_get(
 	buf_len size_t,
 ) Errno
 
-const rootFD Fd_t = 3 // TODO(Pryz): document where this magic number is coming from
+type __wasi_preopentype uint8
+
+const (
+	__wasi_preopentype_dir __wasi_preopentype = iota
+)
+
+type __wasi_prestat_dir struct {
+	pr_name_len size_t
+}
+
+type __wasi_prestat struct {
+	typ __wasi_preopentype
+	dir __wasi_prestat_dir
+}
+
+//go:wasmimport wasi_snapshot_preview1 fd_prestat_get
+//go:noescape
+func __wasi_fd_prestat_get(fd Fd_t, prestat *__wasi_prestat) Errno
+
+//go:wasmimport wasi_snapshot_preview1 fd_prestat_dir_name
+//go:noescape
+func __wasi_fd_prestat_dir_name(fd Fd_t, path *byte, path_len size_t) Errno
+
+// const rootFD Fd_t = 3 // TODO(Pryz): document where this magic number is coming from
 var rootRightsDir Rights_t
 var rootRightsFile Rights_t
 
-var wd string
+//var wd string
 
 var fdPathsMu sync.Mutex
 var fdPaths = make(map[int]string)
 
-func init() {
-	var stat Fdstat_t
-	errno := Fd_fdstat_get(rootFD, &stat)
-	if errno != 0 {
-		// TODO(Pryz): if errno is EBADF it is likely because nothing
-		// was mount into the module.
-		panic("could not get fdstat of root: " + errno.Error())
-	}
-	rootRightsDir = stat.RightsBase
-	rootRightsFile = stat.RightsInheriting
+type opendir struct {
+	fd   Fd_t
+	name string
+}
 
-	wd, _ = Getenv("PWD")
+// List of preopen directories that were exposed by the runtime. The first one
+// is assumed to the be root directory of the file system, and other others are
+// seen as mount points at sub paths of the root.
+var preopens []opendir
+
+// File descriptor for the current working directory, defaults to the fd of the
+// root directory which is expected to be the first preopen.
+var cwd = opendir{
+	fd: ^Fd_t(0),
+}
+
+func init() {
+	dirNameBuf := make([]byte, 256)
+	// We start looking for preopens at fd=3 because 0, 1, and 2 are reserved
+	// for standard input and outputs.
+	for preopenFd := Fd_t(3); ; preopenFd++ {
+		var prestat __wasi_prestat
+		var errno = __wasi_fd_prestat_get(preopenFd, &prestat)
+
+		if errno == EBADF {
+			break
+		}
+		if errno != 0 {
+			panic("fd_prestat: " + errno.Error())
+		}
+		if prestat.typ != __wasi_preopentype_dir {
+			continue
+		}
+		if int(prestat.dir.pr_name_len) > len(dirNameBuf) {
+			dirNameBuf = make([]byte, prestat.dir.pr_name_len)
+		}
+
+		errno = __wasi_fd_prestat_dir_name(preopenFd, &dirNameBuf[0], prestat.dir.pr_name_len)
+		if errno != 0 {
+			panic("fd_prestat_dir_name: " + errno.Error())
+			continue
+		}
+
+		preopens = append(preopens, opendir{
+			fd:   preopenFd,
+			name: string(dirNameBuf[:prestat.dir.pr_name_len]),
+		})
+	}
+
+	if len(preopens) > 0 {
+		var stat Fdstat_t
+		errno := Fd_fdstat_get(preopens[0].fd, &stat)
+		if errno != 0 {
+			// TODO(Pryz): if errno is EBADF it is likely because nothing
+			// was mount into the module.
+			panic("could not get fdstat of root: " + errno.Error())
+		}
+		cwd = preopens[0]
+		rootRightsDir = stat.RightsBase
+		rootRightsFile = stat.RightsInheriting
+	}
+
+	pwd, _ := Getenv("PWD")
+	Chdir(pwd)
 }
 
 // Provided by package runtime.
 func now() (sec int64, nsec int32)
 
-func isAbs(path string) bool {
-	return len(path) > 0 && path[0] == '/'
+func preparePath(path string) (Fd_t, *byte, size_t) {
+	var dirfd Fd_t
+
+	if len(path) == 0 || path[0] != '/' {
+		dirfd = cwd.fd
+	} else if len(preopens) > 0 {
+		dirfd = preopens[0].fd
+	} else {
+		dirfd = ^Fd_t(0)
+	}
+
+	return dirfd, unsafe.StringData(path), size_t(len(path))
 }
 
-func skipPathSeparator(path string) string {
-	i := 0
-	for i < len(path) && path[i] == '/' {
-		i++
+func relativeDirFd(path string) Fd_t {
+	// TODO(achille): we might want to look for the last preopen which is
+	// a prefix of the path received as argument.
+	if len(path) > 0 && path[0] == '/' && len(preopens) > 0 {
+		return preopens[0].fd
 	}
-	return path[i:]
-}
-
-func walkPath(path string) (root, tail string) {
-	if isAbs(path) {
-		return "/", skipPathSeparator(path)
-	}
-	for i < len(path) && path[i] != '/' {
-		i++
-	}
-	return path[:i], skipPathSeparator(path[i:])
-}
-
-func dirPath(path string) string {
-	i := len(path)
-	for i > 0 && path[i-1] != '/' {
-		i--
-	}
-	if i == 0 {
-		return "/"
-	}
-	return path[:i]
-}
-
-func preparePath(path string, followTrailingSymlink bool) (*byte, size_t) {
-	if path == "" || path[0] != '/' {
-		path = wd + "/" + path
-	}
-
-	var resolvedPath string
-	for {
-		var part string
-		part, path = walkPath(path)
-		resolvedPath += "/" + part
-		if i == len(parts)-1 && !followTrailingSymlink {
-			break
-		}
-		for {
-			dest, err := readlink("." + resolvedPath)
-			if err != nil {
-				break
-			}
-			if dest[0] != '/' {
-				dest = dirPath(resolvedPath) + "/" + dest
-			}
-			resolvedPath = dest
-		}
-	}
-
-	return &[]byte("." + resolvedPath)[0], size_t(1 + len(resolvedPath))
-}
-
-func readlink(path string) (string, error) {
-	for buflen := size_t(128); ; buflen *= 2 {
-		buf := make([]byte, buflen)
-		var bufused size_t
-		errno := Path_readlink(
-			rootFD,
-			&[]byte(path)[0],
-			size_t(len(path)),
-			&buf[0],
-			buflen,
-			&bufused,
-		)
-		if errno != 0 {
-			return "", errnoErr(errno)
-		}
-		if bufused < buflen {
-			return string(buf[:bufused]), nil
-		}
-	}
+	return cwd.fd
 }
 
 func Open(path string, openmode int, perm uint32) (int, error) {
 	if path == "" {
 		return 0, EINVAL
 	}
-	if path[0] != '/' {
-		path = wd + "/" + path
-	}
-
-	path_ptr, path_len := preparePath(path, true)
 
 	var oflags Oflags_t
 	if openmode&O_CREATE != 0 {
@@ -458,26 +472,36 @@ func Open(path string, openmode int, perm uint32) (int, error) {
 	switch {
 	case openmode&O_WRONLY != 0:
 		rights &^= RIGHT_FD_READ | RIGHT_FD_READDIR
+		// TODO(achille): wazero needs to offer a mechanism for setting write
+		// permissions on open files; at this time there is none so we add the
+		// O_CREATE flag to force it.
+		oflags |= OFLAG_CREATE
 	case openmode&O_RDWR != 0:
 		// no rights to remove
+		oflags |= OFLAG_CREATE
 	default:
 		rights &^= RIGHT_FD_DATASYNC | RIGHT_FD_WRITE | RIGHT_FD_ALLOCATE | RIGHT_PATH_FILESTAT_SET_SIZE
 	}
 
 	var fdflags Fdflags_t
 	if openmode&O_APPEND != 0 {
-		//fdflags |= FDFLAG_APPEN
+		// TODO(achille): why was this commented out?
+		fdflags |= FDFLAG_APPEND
 	}
 	if openmode&O_SYNC != 0 {
 		fdflags |= FDFLAG_SYNC
 	}
 
+	// TODO(achille): decide if we set rights, and if we don't we should
+	// remove the code above.
 	rights = RIGHT_FULL
+
+	dirfd, path_ptr, path_len := preparePath(path)
 
 	var fd Fd_t
 	errno := Path_open(
-		rootFD,
-		0,
+		dirfd,
+		LOOKUP_SYMLINK_FOLLOW,
 		path_ptr,
 		path_len,
 		oflags,
@@ -487,6 +511,8 @@ func Open(path string, openmode int, perm uint32) (int, error) {
 		&fd,
 	)
 
+	// TODO(achille): this map is needed in order to support Fchdir and
+	// Getwd; it's kind of bad, can we find an alternative?
 	fdPathsMu.Lock()
 	fdPaths[int(fd)] = path
 	fdPathsMu.Unlock()
@@ -508,17 +534,21 @@ func CloseOnExec(fd int) {
 }
 
 func Mkdir(path string, perm uint32) error {
-	path_ptr, path_len := preparePath(path, false)
-	if errno := Path_create_directory(rootFD, path_ptr, path_len); errno != 0 {
+	dirfd, path_ptr, path_len := preparePath(path)
+	if errno := Path_create_directory(dirfd, path_ptr, path_len); errno != 0 {
 		return errnoErr(errno)
 	}
+	// TODO(achille): I commented this code because I don't think that passing
+	// rootFD is the right thing to do here.
+	//
 	// FIXME: matches rights to perm
 	// Not all WASM runtime support rights so we ignore the potential error.
-	_ = Fd_fdstat_set_rights(rootFD, RIGHT_FULL, RIGHT_FULL)
+	// _ = Fd_fdstat_set_rights(rootFD, RIGHT_FULL, RIGHT_FULL)
 	return nil
 }
 
 func ReadDirent(fd int, buf []byte) (int, error) {
+	// TODO(achille): figure out if we should remove this function
 	return 0, ENOSYS
 }
 
@@ -529,15 +559,44 @@ func ReadDir(fd int, buf []byte, cookie Dircookie_t) (int, error) {
 }
 
 func Stat(path string, st *Stat_t) error {
-	path_ptr, path_len := preparePath(path, true)
-	errno := Path_filestat_get(rootFD, 0, path_ptr, path_len, st)
+	dirfd, path_ptr, path_len := preparePath(path)
+	errno := Path_filestat_get(dirfd, LOOKUP_SYMLINK_FOLLOW, path_ptr, path_len, st)
 	return errnoErr(errno)
 }
 
 func Lstat(path string, st *Stat_t) error {
-	path_ptr, path_len := preparePath(path, false)
-	errno := Path_filestat_get(rootFD, 0, path_ptr, path_len, st)
-	return errnoErr(errno)
+	dirfd, path_ptr, path_len := preparePath(path)
+	// TODO(achille): the follow code would be the ideal implementation of this
+	// function but wazero does not yet handle the lookup flags and assumes to
+	// always follow the symbolic links
+	//
+	if Path_filestat_get(dirfd, 0, path_ptr, path_len, st) == 0 {
+		return nil
+	}
+	var fd Fd_t
+	errno := Path_open(
+		dirfd,
+		0, // don't follow symlinks
+		path_ptr,
+		path_len,
+		0,
+		RIGHT_FULL,
+		RIGHT_FULL,
+		0,
+		&fd,
+	)
+	switch errno {
+	case 0:
+		defer Fd_close(fd)
+		return Fstat(int(fd), st)
+	case ELOOP:
+		// On OSX, Wazero does not pass O_SYMLINK to open(2) which errors due to
+		// O_NOFOLLOW being set by not giving LOOKUP_SYMLINK_FOLLOW to path_open.
+		st.Filetype = FILETYPE_SYMBOLIC_LINK
+		return nil
+	default:
+		return errnoErr(errno)
+	}
 }
 
 func Fstat(fd int, st *Stat_t) error {
@@ -546,23 +605,25 @@ func Fstat(fd int, st *Stat_t) error {
 }
 
 func Unlink(path string) error {
-	path_ptr, path_len := preparePath(path, false)
-	errno := Path_unlink_file(rootFD, path_ptr, path_len)
+	dirfd, path_ptr, path_len := preparePath(path)
+	errno := Path_unlink_file(dirfd, path_ptr, path_len)
 	return errnoErr(errno)
 }
 
 func Rmdir(path string) error {
-	path_ptr, path_len := preparePath(path, false)
-	errno := Path_remove_directory(rootFD, path_ptr, path_len)
+	dirfd, path_ptr, path_len := preparePath(path)
+	errno := Path_remove_directory(dirfd, path_ptr, path_len)
 	return errnoErr(errno)
 }
 
 func Chmod(path string, mode uint32) error {
-	return ENOSYS
+	var stat Stat_t
+	return Stat(path, &stat)
 }
 
 func Fchmod(fd int, mode uint32) error {
-	return ENOSYS
+	var stat Stat_t
+	return Fstat(fd, &stat)
 }
 
 func Chown(path string, uid, gid int) error {
@@ -578,10 +639,10 @@ func Lchown(path string, uid, gid int) error {
 }
 
 func UtimesNano(path string, ts []Timespec) error {
-	path_ptr, path_len := preparePath(path, false)
+	dirfd, path_ptr, path_len := preparePath(path)
 	errno := Path_filestat_set_times(
-		rootFD,
-		0,
+		dirfd,
+		LOOKUP_SYMLINK_FOLLOW,
 		path_ptr,
 		path_len,
 		Timestamp_t(TimespecToNsec(ts[0])),
@@ -592,13 +653,13 @@ func UtimesNano(path string, ts []Timespec) error {
 }
 
 func Rename(from, to string) error {
-	old_path, old_path_len := preparePath(from, false)
-	new_path, new_path_len := preparePath(to, false)
+	old_dirfd, old_path, old_path_len := preparePath(from)
+	new_dirfd, new_path, new_path_len := preparePath(to)
 	errno := Path_rename(
-		rootFD,
+		old_dirfd,
 		old_path,
 		old_path_len,
-		rootFD,
+		new_dirfd,
 		new_path,
 		new_path_len,
 	)
@@ -606,16 +667,18 @@ func Rename(from, to string) error {
 }
 
 func Truncate(path string, length int64) error {
-	fd, openErr := Open(path, O_WRONLY, 0)
-	if openErr != nil {
-		return openErr
+	// We use O_APPEND here because it is the only way to get wazero to set the
+	// O_RDWR open flag on the open file, which is needed to truncate ta file,
+	// see ftruncate(2):
+	//
+	//  [EINVAL] fildes is not open for writing.
+	//
+	fd, err := Open(path, O_WRONLY|O_APPEND, 0)
+	if err != nil {
+		return err
 	}
-	truncateErr := Ftruncate(fd, length)
-	closeErr := Close(fd)
-	if truncateErr != nil {
-		return truncateErr
-	}
-	return closeErr
+	defer Close(fd)
+	return Ftruncate(fd, length)
 }
 
 func Ftruncate(fd int, length int64) error {
@@ -626,33 +689,59 @@ func Ftruncate(fd int, length int64) error {
 const ImplementsGetwd = true
 
 func Getwd() (string, error) {
-	return wd, nil
+	if cwd.fd == ^Fd_t(0) {
+		return "", ENOENT
+	}
+	return cwd.name, nil
 }
 
-func Chdir(path string) (err error) {
-	if path[0] != '/' {
-		path = wd + "/" + path
+func Chdir(path string) error {
+	//println("chdir:", path)
+	dirfd, path_ptr, path_len := preparePath(path)
+
+	errno := Path_open(
+		dirfd,
+		LOOKUP_SYMLINK_FOLLOW,
+		path_ptr,
+		path_len,
+		OFLAG_DIRECTORY,
+		RIGHT_FULL,
+		RIGHT_FULL,
+		0,
+		&dirfd,
+	)
+
+	if errno != 0 {
+		return errno
 	}
-	var st Stat_t
-	if err := Stat(path, &st); err != nil {
-		return err
-	}
-	wd = path
+
+	// Note: this might be a preopen, we rely on the runtime to forbid closing
+	// of preopen file descriptors (this is validated by wasi-testsuite).
+	Fd_close(cwd.fd)
+	cwd.fd = dirfd
+	cwd.name = path
 	return nil
 }
 
 func Fchdir(fd int) error {
 	fdPathsMu.Lock()
-	wd = fdPaths[fd]
-	fdPathsMu.Unlock()
+	defer fdPathsMu.Unlock()
+
+	dir, ok := fdPaths[fd]
+	if !ok {
+		return EBADF
+	}
+
+	cwd.fd = Fd_t(fd)
+	cwd.name = dir
 	return nil
 }
 
 func Readlink(path string, buf []byte) (n int, err error) {
-	path_ptr, path_len := preparePath(path, false)
+	dirfd, path_ptr, path_len := preparePath(path)
 	var bufused size_t
 	errno := Path_readlink(
-		rootFD,
+		dirfd,
 		path_ptr,
 		path_len,
 		&buf[0],
@@ -663,14 +752,14 @@ func Readlink(path string, buf []byte) (n int, err error) {
 }
 
 func Link(path, link string) error {
-	old_path, old_path_len := preparePath(path, false)
-	new_path, new_path_len := preparePath(link, false)
+	old_dirfd, old_path, old_path_len := preparePath(path)
+	new_dirfd, new_path, new_path_len := preparePath(link)
 	errno := Path_link(
-		rootFD,
-		0,
+		old_dirfd,
+		LOOKUP_SYMLINK_FOLLOW,
 		old_path,
 		old_path_len,
-		rootFD,
+		new_dirfd,
 		new_path,
 		new_path_len,
 	)
@@ -678,11 +767,11 @@ func Link(path, link string) error {
 }
 
 func Symlink(path, link string) error {
-	new_path, new_path_len := preparePath(link, false)
+	dirfd, new_path, new_path_len := preparePath(link)
 	errno := Path_symlink(
 		&[]byte(path)[0],
 		size_t(len(path)),
-		rootFD, // TODO(Pryz): Meaning only works with absolute paths ?
+		dirfd,
 		new_path,
 		new_path_len,
 	)
@@ -690,7 +779,8 @@ func Symlink(path, link string) error {
 }
 
 func Fsync(fd int) error {
-	return ENOSYS
+	errno := Fd_sync(Fd_t(fd))
+	return errnoErr(errno)
 }
 
 func makeIOVec(b []byte) *Ciovec_t {
