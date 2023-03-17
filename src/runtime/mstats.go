@@ -460,8 +460,7 @@ func readmemstats_m(stats *MemStats) {
 	if heapRetained != consRetained {
 		print("runtime: global value=", heapRetained, "\n")
 		print("runtime: consistent value=", consRetained, "\n")
-		println("measures of the retained heap are not equal")
-		//throw("measures of the retained heap are not equal")
+		throw("measures of the retained heap are not equal")
 	}
 	if gcController.totalAlloc.Load() != totalAlloc {
 		print("runtime: totalAlloc=", gcController.totalAlloc.Load(), "\n")
