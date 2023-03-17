@@ -46,7 +46,7 @@ type Stat_t struct {
 	Mtime    Timestamp_t
 	Ctime    Timestamp_t
 
-	Mode int // FIXME
+	Mode int
 
 	// Uid and Gid are always zero on wasip1 platforms
 	Uid uint32
@@ -590,6 +590,7 @@ func Stat(path string, st *Stat_t) error {
 	}
 	dirfd, path_ptr, path_len := preparePath(path)
 	errno := Path_filestat_get(dirfd, LOOKUP_SYMLINK_FOLLOW, path_ptr, path_len, st)
+	setDefaultMode(st)
 	return errnoErr(errno)
 }
 
@@ -598,42 +599,26 @@ func Lstat(path string, st *Stat_t) error {
 		return EINVAL
 	}
 	dirfd, path_ptr, path_len := preparePath(path)
-	// TODO(achille): the follow code would be the ideal implementation of this
-	// function but wazero does not yet handle the lookup flags and assumes to
-	// always follow the symbolic links
-	//
-	if Path_filestat_get(dirfd, 0, path_ptr, path_len, st) == 0 {
-		return nil
-	}
-	var fd Fd_t
-	errno := Path_open(
-		dirfd,
-		0, // don't follow symlinks
-		path_ptr,
-		path_len,
-		0,
-		RIGHT_FULL,
-		RIGHT_FULL,
-		0,
-		&fd,
-	)
-	switch errno {
-	case 0:
-		defer Fd_close(fd)
-		return Fstat(int(fd), st)
-	case ELOOP:
-		// On OSX, Wazero does not pass O_SYMLINK to open(2) which errors due to
-		// O_NOFOLLOW being set by not giving LOOKUP_SYMLINK_FOLLOW to path_open.
-		st.Filetype = FILETYPE_SYMBOLIC_LINK
-		return nil
-	default:
-		return errnoErr(errno)
-	}
+	errno := Path_filestat_get(dirfd, 0, path_ptr, path_len, st)
+	setDefaultMode(st)
+	return errnoErr(errno)
 }
 
 func Fstat(fd int, st *Stat_t) error {
 	errno := Fd_filestat_get(Fd_t(fd), st)
+	setDefaultMode(st)
 	return errnoErr(errno)
+}
+
+func setDefaultMode(st *Stat_t) {
+	// WASI does not support unix-like permissions, but Go programs are likely
+	// to expect the permission bits to not be zero so we set defaults to help
+	// avoid breaking applications that are migrating to WASM.
+	if st.Filetype == FILETYPE_DIRECTORY {
+		st.Mode = 0700
+	} else {
+		st.Mode = 0600
+	}
 }
 
 func Unlink(path string) error {
