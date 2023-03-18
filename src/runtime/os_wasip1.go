@@ -7,7 +7,6 @@
 package runtime
 
 import (
-	"runtime/internal/atomic"
 	"unsafe"
 )
 
@@ -194,11 +193,6 @@ func write1(fd uintptr, p unsafe.Pointer, n int32) int32 {
 	return int32(nwritten)
 }
 
-// Stubs so tests can link correctly. These should never be called.
-func open(name *byte, mode, perm int32) int32        { panic("not implemented") }
-func closefd(fd int32) int32                         { panic("not implemented") }
-func read(fd int32, p unsafe.Pointer, n int32) int32 { panic("not implemented") }
-
 func usleep(usec uint32) {
 	var in __wasip1_subscription_t
 	var out __wasip1_event_t
@@ -215,83 +209,6 @@ func usleep(usec uint32) {
 	if __wasip1_poll_oneoff(&in, &out, 1, &nevents) != 0 {
 		throw("wasi_snapshot_preview1.poll_oneoff")
 	}
-}
-
-//go:nosplit
-func usleep_no_g(usec uint32) {
-	usleep(usec)
-}
-
-// func exitThread(wait *uint32)
-// FIXME: wasm doesn't have atomic yet
-func exitThread(wait *atomic.Uint32)
-
-type mOS struct{}
-
-func osyield()
-
-//go:nosplit
-func osyield_no_g() {
-	osyield()
-}
-
-func sigpanic() {
-	// FIXME
-}
-
-type sigset struct{}
-
-// Called to initialize a new m (including the bootstrap m).
-// Called on the parent thread (main thread in case of bootstrap), can allocate memory.
-func mpreinit(mp *m) {
-	mp.gsignal = malg(32 * 1024)
-	mp.gsignal.m = mp
-}
-
-//go:nosplit
-func msigsave(mp *m) {
-}
-
-//go:nosplit
-func sigsave(p *sigset) {
-	// FIXME
-}
-
-//go:nosplit
-func msigrestore(sigmask sigset) {
-}
-
-//go:nosplit
-//go:nowritebarrierrec
-func clearSignalHandlers() {
-}
-
-//go:nosplit
-func sigblock(exiting bool) {
-}
-
-// Called to initialize a new m (including the bootstrap m).
-// Called on the new thread, cannot allocate memory.
-func minit() {
-}
-
-// Called from dropm to undo the effect of an minit.
-func unminit() {
-}
-
-func mdestroy(mp *m) {
-	// FIXME
-}
-
-// wasm has no signals
-const _NSIG = 0
-
-func signame(sig uint32) string {
-	return ""
-}
-
-func crash() {
-	*(*int32)(nil) = 0
 }
 
 func getRandomData(r []byte) {
@@ -370,48 +287,4 @@ func nanotime1() int64 {
 		throw("__wasip1_clock_time_get failed")
 	}
 	return int64(time)
-}
-
-func initsig(preinit bool) {
-}
-
-// May run with m.p==nil, so write barriers are not allowed.
-//
-//go:nowritebarrier
-func newosproc(mp *m) {
-	throw("newosproc: not implemented")
-}
-
-func setProcessCPUProfiler(hz int32) {}
-func setThreadCPUProfiler(hz int32)  {}
-func sigdisable(uint32)              {}
-func sigenable(uint32)               {}
-func sigignore(uint32)               {}
-
-//go:linkname os_sigpipe os.sigpipe
-func os_sigpipe() {
-	throw("too many writes on closed pipe")
-}
-
-//go:nosplit
-func cputicks() int64 {
-	// Currently cputicks() is used in blocking profiler and to seed runtime·fastrand().
-	// runtime·nanotime() is a poor approximation of CPU ticks that is enough for the profiler.
-	// TODO: need more entropy to better seed fastrand.
-	return nanotime()
-}
-
-//go:linkname syscall_now syscall.now
-func syscall_now() (sec int64, nsec int32) {
-	sec, nsec, _ = time_now()
-	return
-}
-
-// gsignalStack is unused on js.
-type gsignalStack struct{}
-
-const preemptMSupported = false
-
-func preemptM(mp *m) {
-	// No threads, so nothing to do.
 }
