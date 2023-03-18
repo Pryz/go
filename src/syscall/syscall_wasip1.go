@@ -13,15 +13,30 @@ import (
 	"unsafe"
 )
 
+type Dircookie = uint64
+
+type Filetype = uint8
+
+const (
+	FILETYPE_UNKNOWN Filetype = iota
+	FILETYPE_BLOCK_DEVICE
+	FILETYPE_CHARACTER_DEVICE
+	FILETYPE_DIRECTORY
+	FILETYPE_REGULAR_FILE
+	FILETYPE_SOCKET_DGRAM
+	FILETYPE_SOCKET_STREAM
+	FILETYPE_SYMBOLIC_LINK
+)
+
 type Dirent struct {
 	// The offset of the next directory entry stored in this directory.
-	Next Dircookie_t
+	Next Dircookie
 	// The serial number of the file referred to by this directory entry.
-	Ino Inode_t
+	Ino uint64
 	// The length of the name of the directory entry.
 	Namlen uint32
 	// The type of the file referred to by this directory entry.
-	Type Filetype_t
+	Type Filetype
 	// Name of the directory entry.
 	Name *byte
 }

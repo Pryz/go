@@ -10,31 +10,31 @@ import (
 	"unsafe"
 )
 
-type uintptr_t uint32
+type uintptr_t = uint32
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-size-u32
-type size_t uint32
+type size_t = uint32
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-errno-variant
-type __wasip1_errno_t uint32
+type __wasip1_errno_t = uint32
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-filesize-u64
-type __wasip1_filesize_t uint64
+type __wasip1_filesize_t = uint64
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-timestamp-u64
-type __wasip1_timestamp_t uint64
+type __wasip1_timestamp_t = uint64
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd-handle
-type __wasip1_fd_t uint32
+type __wasip1_fd_t = uint32
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-clockid-variant
-type __wasip1_clockid_t uint32
+type __wasip1_clockid_t = uint32
 
 const (
-	__WASIP1_CLOCK_REALTIME           __wasip1_clockid_t = 0
-	__WASIP1_CLOCK_MONOTONIC          __wasip1_clockid_t = 1
-	__WASIP1_CLOCK_PROCESS_CPUTIME_ID __wasip1_clockid_t = 2
-	__WASIP1_CLOCK_THREAD_CPUTIME_ID  __wasip1_clockid_t = 3
+	__wasip1_clock_realtime           __wasip1_clockid_t = 0
+	__wasip1_clock_monotonic          __wasip1_clockid_t = 1
+	__wasip1_clock_process_cputime_id __wasip1_clockid_t = 2
+	__wasip1_clock_thread_cputime_id  __wasip1_clockid_t = 3
 )
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-iovec-record
@@ -202,7 +202,7 @@ func usleep(usec uint32) {
 	*eventtype = __wasip1_eventtype_clock
 
 	subscription := in.u.__wasip1_subscription_clock_t()
-	subscription.id = __WASIP1_CLOCK_MONOTONIC
+	subscription.id = __wasip1_clock_monotonic
 	subscription.timeout = __wasip1_timestamp_t(usec) * 1e3
 	subscription.precision = 1e3
 
@@ -275,7 +275,7 @@ func walltime() (sec int64, nsec int32) {
 
 func walltime1() (sec int64, nsec int32) {
 	var time __wasip1_timestamp_t
-	if __wasip1_clock_time_get(__WASIP1_CLOCK_REALTIME, 0, &time) != 0 {
+	if __wasip1_clock_time_get(__wasip1_clock_realtime, 0, &time) != 0 {
 		throw("__wasip1_clock_time_get failed")
 	}
 	return int64(time / 1000000000), int32(time % 1000000000)
@@ -283,7 +283,7 @@ func walltime1() (sec int64, nsec int32) {
 
 func nanotime1() int64 {
 	var time __wasip1_timestamp_t
-	if __wasip1_clock_time_get(__WASIP1_CLOCK_MONOTONIC, 0, &time) != 0 {
+	if __wasip1_clock_time_get(__wasip1_clock_monotonic, 0, &time) != 0 {
 		throw("__wasip1_clock_time_get failed")
 	}
 	return int64(time)

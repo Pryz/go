@@ -29,8 +29,7 @@ func direntType(buf []byte) FileMode {
 	if off >= uintptr(len(buf)) {
 		return ^FileMode(0) // unknown
 	}
-	typ := syscall.Filetype_t(buf[off])
-	switch typ {
+	switch syscall.Filetype(buf[off]) {
 	case syscall.FILETYPE_BLOCK_DEVICE:
 		return ModeDevice
 	case syscall.FILETYPE_CHARACTER_DEVICE:

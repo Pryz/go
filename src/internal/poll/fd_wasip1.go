@@ -17,7 +17,7 @@ import (
 // ReadDir wraps syscall.ReadDir.
 // We treat this like an ordinary system call rather than a call
 // that tries to fill the buffer.
-func (fd *FD) ReadDir(buf []byte, cookie syscall.Dircookie_t) (int, error) {
+func (fd *FD) ReadDir(buf []byte, cookie syscall.Dircookie) (int, error) {
 	if err := fd.incref(); err != nil {
 		return 0, err
 	}
@@ -63,7 +63,7 @@ func (fd *FD) ReadDirent(buf []byte) (int, error) {
 		if size > uint64(len(b)) {
 			break
 		}
-		fd.next = syscall.Dircookie_t(next)
+		fd.next = syscall.Dircookie(next)
 		b = b[size:]
 	}
 
@@ -170,8 +170,8 @@ type FD struct {
 	// Whether this is a file rather than a network socket.
 	isFile bool
 
-	typ  syscall.Filetype_t
-	next syscall.Dircookie_t
+	typ  syscall.Filetype
+	next syscall.Dircookie
 }
 
 // Init initializes the FD. The Sysfd field should already be set.
