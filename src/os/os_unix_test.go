@@ -242,7 +242,7 @@ func TestMkdirStickyUmask(t *testing.T) {
 
 // See also issues: 22939, 24331
 func newFileTest(t *testing.T, blocking bool) {
-	if runtime.GOOS == "js" {
+	if runtime.GOOS == "js" || runtime.GOOS == "wasip1" {
 		t.Skipf("syscall.Pipe is not available on %s.", runtime.GOOS)
 	}
 

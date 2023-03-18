@@ -1646,7 +1646,7 @@ func TestSeek(t *testing.T) {
 
 func TestSeekError(t *testing.T) {
 	switch runtime.GOOS {
-	case "js", "plan9":
+	case "js", "plan9", "wasip1":
 		t.Skipf("skipping test on %v", runtime.GOOS)
 	}
 	t.Parallel()
@@ -2956,8 +2956,8 @@ func TestWriteStringAlloc(t *testing.T) {
 // Test that it's OK to have parallel I/O and Close on a pipe.
 func TestPipeIOCloseRace(t *testing.T) {
 	// Skip on wasm, which doesn't have pipes.
-	if runtime.GOOS == "js" {
-		t.Skip("skipping on js: no pipes")
+	if runtime.GOOS == "js" || runtime.GOOS == "wasip1" {
+		t.Skipf("skipping on %s: no pipes", runtime.GOOS)
 	}
 	t.Parallel()
 
@@ -3034,8 +3034,8 @@ func TestPipeIOCloseRace(t *testing.T) {
 // Test that it's OK to call Close concurrently on a pipe.
 func TestPipeCloseRace(t *testing.T) {
 	// Skip on wasm, which doesn't have pipes.
-	if runtime.GOOS == "js" {
-		t.Skip("skipping on js: no pipes")
+	if runtime.GOOS == "js" || runtime.GOOS == "wasip1" {
+		t.Skipf("skipping on %s: no pipes", runtime.GOOS)
 	}
 	t.Parallel()
 
