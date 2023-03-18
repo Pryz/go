@@ -443,18 +443,29 @@ func init() {
 // Provided by package runtime.
 func now() (sec int64, nsec int32)
 
-func preparePath(path string) (Fd_t, *byte, size_t) {
+func joinPath(dir, file string) string {
+	if dir == "/" {
+		return dir + file
+	}
+	return dir + "/" + file
+}
+
+func preparePath(path string) (Fd_t, string, *byte, size_t) {
 	var dirfd Fd_t
+	var dirname string
 
 	if len(path) == 0 || path[0] != '/' {
 		dirfd = cwd.fd
+		dirname = cwd.name
 	} else if len(preopens) > 0 {
 		dirfd = preopens[0].fd
+		dirname = preopens[0].name
 	} else {
 		dirfd = ^Fd_t(0)
+		dirname = "/"
 	}
 
-	return dirfd, unsafe.StringData(path), size_t(len(path))
+	return dirfd, dirname, unsafe.StringData(path), size_t(len(path))
 }
 
 func relativeDirFd(path string) Fd_t {
@@ -519,7 +530,7 @@ func Open(path string, openmode int, perm uint32) (int, error) {
 	// remove the code above.
 	rights = RIGHT_FULL
 
-	dirfd, path_ptr, path_len := preparePath(path)
+	dirfd, dirname, path_ptr, path_len := preparePath(path)
 
 	var fd Fd_t
 	errno := Path_open(
@@ -536,6 +547,7 @@ func Open(path string, openmode int, perm uint32) (int, error) {
 
 	// TODO(achille): this map is needed in order to support Fchdir and
 	// Getwd; it's kind of bad, can we find an alternative?
+	path = joinPath(dirname, path)
 	fdPathsMu.Lock()
 	fdPaths[int(fd)] = path
 	fdPathsMu.Unlock()
@@ -560,7 +572,7 @@ func Mkdir(path string, perm uint32) error {
 	if path == "" {
 		return errEINVAL
 	}
-	dirfd, path_ptr, path_len := preparePath(path)
+	dirfd, _, path_ptr, path_len := preparePath(path)
 	if errno := Path_create_directory(dirfd, path_ptr, path_len); errno != 0 {
 		return errnoErr(errno)
 	}
@@ -583,7 +595,7 @@ func Stat(path string, st *Stat_t) error {
 	if path == "" {
 		return errEINVAL
 	}
-	dirfd, path_ptr, path_len := preparePath(path)
+	dirfd, _, path_ptr, path_len := preparePath(path)
 	errno := Path_filestat_get(dirfd, LOOKUP_SYMLINK_FOLLOW, path_ptr, path_len, st)
 	setDefaultMode(st)
 	return errnoErr(errno)
@@ -593,7 +605,7 @@ func Lstat(path string, st *Stat_t) error {
 	if path == "" {
 		return errEINVAL
 	}
-	dirfd, path_ptr, path_len := preparePath(path)
+	dirfd, _, path_ptr, path_len := preparePath(path)
 	errno := Path_filestat_get(dirfd, 0, path_ptr, path_len, st)
 	setDefaultMode(st)
 	return errnoErr(errno)
@@ -620,7 +632,7 @@ func Unlink(path string) error {
 	if path == "" {
 		return errEINVAL
 	}
-	dirfd, path_ptr, path_len := preparePath(path)
+	dirfd, _, path_ptr, path_len := preparePath(path)
 	errno := Path_unlink_file(dirfd, path_ptr, path_len)
 	return errnoErr(errno)
 }
@@ -629,7 +641,7 @@ func Rmdir(path string) error {
 	if path == "" {
 		return errEINVAL
 	}
-	dirfd, path_ptr, path_len := preparePath(path)
+	dirfd, _, path_ptr, path_len := preparePath(path)
 	errno := Path_remove_directory(dirfd, path_ptr, path_len)
 	return errnoErr(errno)
 }
@@ -660,7 +672,7 @@ func UtimesNano(path string, ts []Timespec) error {
 	if path == "" {
 		return errEINVAL
 	}
-	dirfd, path_ptr, path_len := preparePath(path)
+	dirfd, _, path_ptr, path_len := preparePath(path)
 	errno := Path_filestat_set_times(
 		dirfd,
 		LOOKUP_SYMLINK_FOLLOW,
@@ -677,8 +689,8 @@ func Rename(from, to string) error {
 	if from == "" || to == "" {
 		return errEINVAL
 	}
-	old_dirfd, old_path, old_path_len := preparePath(from)
-	new_dirfd, new_path, new_path_len := preparePath(to)
+	old_dirfd, _, old_path, old_path_len := preparePath(from)
+	new_dirfd, _, new_path, new_path_len := preparePath(to)
 	errno := Path_rename(
 		old_dirfd,
 		old_path,
@@ -726,7 +738,7 @@ func Chdir(path string) error {
 	if path == "" {
 		return errEINVAL
 	}
-	dirfd, path_ptr, path_len := preparePath(path)
+	dirfd, dirname, path_ptr, path_len := preparePath(path)
 
 	errno := Path_open(
 		dirfd,
@@ -748,7 +760,7 @@ func Chdir(path string) error {
 	// of preopen file descriptors (this is validated by wasi-testsuite).
 	Fd_close(cwd.fd)
 	cwd.fd = dirfd
-	cwd.name = path
+	cwd.name = joinPath(dirname, path)
 	return nil
 }
 
@@ -770,7 +782,7 @@ func Readlink(path string, buf []byte) (n int, err error) {
 	if path == "" {
 		return 0, errEINVAL
 	}
-	dirfd, path_ptr, path_len := preparePath(path)
+	dirfd, _, path_ptr, path_len := preparePath(path)
 	var bufused size_t
 	errno := Path_readlink(
 		dirfd,
@@ -787,8 +799,8 @@ func Link(path, link string) error {
 	if path == "" || link == "" {
 		return errEINVAL
 	}
-	old_dirfd, old_path, old_path_len := preparePath(path)
-	new_dirfd, new_path, new_path_len := preparePath(link)
+	old_dirfd, _, old_path, old_path_len := preparePath(path)
+	new_dirfd, _, new_path, new_path_len := preparePath(link)
 	errno := Path_link(
 		old_dirfd,
 		LOOKUP_SYMLINK_FOLLOW,
@@ -805,7 +817,7 @@ func Symlink(path, link string) error {
 	if path == "" || link == "" {
 		return errEINVAL
 	}
-	dirfd, new_path, new_path_len := preparePath(link)
+	dirfd, _, new_path, new_path_len := preparePath(link)
 	errno := Path_symlink(
 		&[]byte(path)[0],
 		size_t(len(path)),

@@ -1375,7 +1375,7 @@ func TestAbs(t *testing.T) {
 		absinfo, err := os.Stat(abspath)
 		if err != nil || !os.SameFile(absinfo, info) {
 			if runtime.GOOS == "wasi" {
-				t.Skipf("Abs(%q)=%q, not the same file but inodes are not supported on "+runtime.GOOS, path, abspath)
+				t.Logf("Abs(%q)=%q, not the same file but inodes are not supported on "+runtime.GOOS, path, abspath)
 			} else {
 				t.Errorf("Abs(%q)=%q, not the same file", path, abspath)
 			}
