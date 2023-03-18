@@ -365,11 +365,8 @@ func __wasi_fd_prestat_get(fd Fd_t, prestat *__wasi_prestat) Errno
 //go:noescape
 func __wasi_fd_prestat_dir_name(fd Fd_t, path *byte, path_len size_t) Errno
 
-// const rootFD Fd_t = 3 // TODO(Pryz): document where this magic number is coming from
 var rootRightsDir Rights_t
 var rootRightsFile Rights_t
-
-//var wd string
 
 var fdPathsMu sync.Mutex
 var fdPaths = make(map[int]string)
