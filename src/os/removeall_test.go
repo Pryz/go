@@ -422,9 +422,12 @@ func TestRemoveAllWithMoreErrorThanReqSize(t *testing.T) {
 		return
 	}
 	if err == nil {
-		if runtime.GOOS == "windows" {
+		if runtime.GOOS == "windows" || runtime.GOOS == "wasip1" {
 			// Marking a directory as read-only in Windows does not prevent the RemoveAll
 			// from creating or removing files within it.
+			//
+			// For wasi, there is no support for file permissionsk so we cannot prevent
+			// RemovaAll from removing the files.
 			return
 		}
 		t.Fatal("RemoveAll(<read-only directory>) = nil; want error")
