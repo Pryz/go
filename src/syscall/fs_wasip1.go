@@ -444,6 +444,11 @@ func init() {
 func now() (sec int64, nsec int32)
 
 func joinPath(dir, file string) string {
+	i := 0
+	for i < len(file) && file[i] == '/' {
+		i++
+	}
+	file = file[i:]
 	if dir == "/" {
 		return dir + file
 	}
@@ -545,8 +550,8 @@ func Open(path string, openmode int, perm uint32) (int, error) {
 		&fd,
 	)
 
-	// TODO(achille): this map is needed in order to support Fchdir and
-	// Getwd; it's kind of bad, can we find an alternative?
+	// TODO(achille): this map is needed in order to support Fchdir and Getwd;
+	// it's kind of bad, can we find an alternative?
 	path = joinPath(dirname, path)
 	fdPathsMu.Lock()
 	fdPaths[int(fd)] = path
@@ -766,16 +771,18 @@ func Chdir(path string) error {
 
 func Fchdir(fd int) error {
 	fdPathsMu.Lock()
-	defer fdPathsMu.Unlock()
-
 	dir, ok := fdPaths[fd]
+	fdPathsMu.Unlock()
 	if !ok {
 		return errEBADF
 	}
-
-	cwd.fd = Fd_t(fd)
-	cwd.name = dir
-	return nil
+	// wasi does not offer a mechanism to duplicate file descriptor so instead
+	// emulate Fchdir by setting the current working directory to the path that
+	// the file descriptor was originally opened from. This is necessary because
+	// we don't have ownership of the file descriptor, which might be closed
+	// after Fchdir returns and would break relataive path lookups if we had
+	// retained it.
+	return Chdir(dir)
 }
 
 func Readlink(path string, buf []byte) (n int, err error) {
