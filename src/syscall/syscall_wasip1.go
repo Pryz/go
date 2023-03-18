@@ -310,7 +310,7 @@ func Wait4(pid int, wstatus *WaitStatus, options int, rusage *Rusage) (wpid int,
 	return 0, ENOSYS
 }
 
-// TODO: figure out how to do umask emulation?
+// TODO(achille): figure out how to do umask emulation?
 var umask int
 
 func Umask(mask int) int {

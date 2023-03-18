@@ -269,8 +269,6 @@ var (
 
 // errnoErr returns common boxed Errno values, to prevent
 // allocations at runtime.
-//
-//go:noinline
 func errnoErr(e Errno) error {
 	switch e {
 	case 0:

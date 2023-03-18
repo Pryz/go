@@ -424,9 +424,7 @@ func init() {
 		var stat Fdstat_t
 		errno := Fd_fdstat_get(preopens[0].fd, &stat)
 		if errno != 0 {
-			// TODO(Pryz): if errno is EBADF it is likely because nothing
-			// was mount into the module.
-			panic("could not get fdstat of root: " + errno.Error())
+			panic("fd_fdstat_get: " + errno.Error())
 		}
 		cwd = preopens[0]
 		rootRightsDir = stat.RightsBase
@@ -468,15 +466,6 @@ func preparePath(path string) (Fd_t, string, *byte, size_t) {
 	}
 
 	return dirfd, dirname, unsafe.StringData(path), size_t(len(path))
-}
-
-func relativeDirFd(path string) Fd_t {
-	// TODO(achille): we might want to look for the last preopen which is
-	// a prefix of the path received as argument.
-	if len(path) > 0 && path[0] == '/' && len(preopens) > 0 {
-		return preopens[0].fd
-	}
-	return cwd.fd
 }
 
 func Open(path string, openmode int, perm uint32) (int, error) {
@@ -575,16 +564,8 @@ func Mkdir(path string, perm uint32) error {
 		return errEINVAL
 	}
 	dirfd, _, path_ptr, path_len := preparePath(path)
-	if errno := Path_create_directory(dirfd, path_ptr, path_len); errno != 0 {
-		return errnoErr(errno)
-	}
-	// TODO(achille): I commented this code because I don't think that passing
-	// rootFD is the right thing to do here.
-	//
-	// FIXME: matches rights to perm
-	// Not all WASM runtime support rights so we ignore the potential error.
-	// _ = Fd_fdstat_set_rights(rootFD, RIGHT_FULL, RIGHT_FULL)
-	return nil
+	errno := Path_create_directory(dirfd, path_ptr, path_len)
+	return errnoErr(errno)
 }
 
 func ReadDir(fd int, buf []byte, cookie Dircookie_t) (int, error) {
