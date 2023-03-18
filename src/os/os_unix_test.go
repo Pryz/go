@@ -40,6 +40,9 @@ func checkUidGid(t *testing.T, path string, uid, gid int) {
 }
 
 func TestChown(t *testing.T) {
+	if runtime.GOOS == "wasip1" {
+		t.Skip("file ownership not supported on " + runtime.GOOS)
+	}
 	t.Parallel()
 
 	// Use TempDir() to make sure we're on a local file system,
@@ -85,6 +88,9 @@ func TestChown(t *testing.T) {
 }
 
 func TestFileChown(t *testing.T) {
+	if runtime.GOOS == "wasip1" {
+		t.Skip("file ownership not supported on " + runtime.GOOS)
+	}
 	t.Parallel()
 
 	// Use TempDir() to make sure we're on a local file system,
@@ -220,6 +226,9 @@ func TestReaddirRemoveRace(t *testing.T) {
 
 // Issue 23120: respect umask when doing Mkdir with the sticky bit
 func TestMkdirStickyUmask(t *testing.T) {
+	if runtime.GOOS == "wasip1" {
+		t.Skip("file permissions not supported on " + runtime.GOOS)
+	}
 	t.Parallel()
 
 	const umask = 0077
