@@ -483,13 +483,13 @@ func Open(path string, openmode int, perm uint32) (int, error) {
 	}
 
 	// Remove when https://github.com/bytecodealliance/wasmtime/pull/4967 is merged.
-	st := &Stat_t{}
-	if err := Stat(path, st); err != nil && err != ENOENT {
-		return 0, err
-	}
-	if st.Filetype == FILETYPE_DIRECTORY {
-		oflags |= OFLAG_DIRECTORY
-	}
+	// st := &Stat_t{}
+	// if err := Stat(path, st); err != nil && err != ENOENT {
+	// 	return 0, err
+	// }
+	// if st.Filetype == FILETYPE_DIRECTORY {
+	// 	oflags |= OFLAG_DIRECTORY
+	// }
 
 	var rights = rootRightsFile
 	switch {
@@ -726,7 +726,6 @@ func Chdir(path string) error {
 	if path == "" {
 		return errEINVAL
 	}
-	//println("chdir:", path)
 	dirfd, path_ptr, path_len := preparePath(path)
 
 	errno := Path_open(

@@ -49,7 +49,9 @@ func (fd *FD) ReadDirent(buf []byte) (int, error) {
 	// We assume that the caller of ReadDirent will consume the entire buffer
 	// up to the last full entry, so we scan through the buffer looking for the
 	// value of the last next cookie.
-	for b := buf[:n]; len(b) > 0; {
+	b := buf[:n]
+
+	for len(b) > 0 {
 		next, ok := direntNext(b)
 		if !ok {
 			break
@@ -65,7 +67,14 @@ func (fd *FD) ReadDirent(buf []byte) (int, error) {
 		b = b[size:]
 	}
 
-	return n, nil
+	// Trim a potentially incomplete trailing entry; this is necessary because
+	// the code in src/os/dir_unix.go does not deal well with partial values in
+	// calls to direntReclen, etc... and ends up causing an early EOF before all
+	// directory entries were consumed. ReadDirent is called with a large enough
+	// buffer (8 KiB) that at least one entry should always fit, tho this seems
+	// a bit brittle but cannot be addressed without a large change of the
+	// algorithm in the os.(*File).readdir method.
+	return n - len(b), nil
 }
 
 func direntReclen(buf []byte) (uint64, bool) {
