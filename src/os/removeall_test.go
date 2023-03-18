@@ -274,7 +274,7 @@ func TestRemoveReadOnlyDir(t *testing.T) {
 // Issue #29983.
 func TestRemoveAllButReadOnlyAndPathError(t *testing.T) {
 	switch runtime.GOOS {
-	case "js", "windows":
+	case "js", "wasip1", "windows":
 		t.Skipf("skipping test on %s", runtime.GOOS)
 	}
 
