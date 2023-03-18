@@ -787,7 +787,7 @@ func Symlink(path, link string) error {
 	}
 	dirfd, _, new_path, new_path_len := preparePath(link)
 	errno := __wasip1_path_symlink(
-		&[]byte(path)[0],
+		unsafe.StringData(path),
 		size_t(len(path)),
 		dirfd,
 		new_path,
