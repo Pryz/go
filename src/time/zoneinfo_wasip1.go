@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build wasi
+//go:build wasip1
 
 package time
 
@@ -10,7 +10,7 @@ import (
 	"runtime"
 )
 
-// in wasi zoneinfo is managed by the runtime.
+// in wasip1 zoneinfo is managed by the runtime.
 var platformZoneSources = []string{}
 
 var zoneSources = []string{

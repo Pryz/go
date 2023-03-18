@@ -27,7 +27,7 @@ var knownOS = map[string]bool{
 	"openbsd":   true,
 	"plan9":     true,
 	"solaris":   true,
-	"wasi":      true,
+	"wasip1":    true,
 	"windows":   true,
 	"zos":       true,
 }

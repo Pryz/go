@@ -39,7 +39,7 @@ var Interrupt = interrupt
 var DaysIn = daysIn
 
 func init() {
-	if runtime.GOOS == "wasi" {
+	if runtime.GOOS == "wasip1" {
 		// There is no mechanism is wasi to interrupt the call to poll_oneoff
 		// used to implement runtime.usleep so this function does nothing, which
 		// somewhat defeats the purpose of TestSleep but we are still better off

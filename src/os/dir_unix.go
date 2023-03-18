@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build aix || dragonfly || freebsd || (js && wasm) || wasi || linux || netbsd || openbsd || solaris
+//go:build aix || dragonfly || freebsd || (js && wasm) || wasip1 || linux || netbsd || openbsd || solaris
 
 package os
 
@@ -41,7 +41,6 @@ func (d *dirInfo) close() {
 	}
 }
 
-// FIXME: readdir is fucked up with wasi.
 func (f *File) readdir(n int, mode readdirMode) (names []string, dirents []DirEntry, infos []FileInfo, err error) {
 	// If this file has no dirinfo, create one.
 	if f.dirinfo == nil {
@@ -92,7 +91,7 @@ func (f *File) readdir(n int, mode readdirMode) (names []string, dirents []DirEn
 		}
 		if ino == 0 {
 			//FIXME(julien): looks like in WASI inodes might be 0 ?
-			if runtime.GOOS != "wasi" {
+			if runtime.GOOS != "wasip1" {
 				continue
 			}
 		}

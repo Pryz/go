@@ -185,7 +185,7 @@ func testBrokenTimestamps(t *testing.T, data []byte) {
 
 func TestTraceStress(t *testing.T) {
 	switch runtime.GOOS {
-	case "js", "wasi":
+	case "js", "wasip1":
 		t.Skip("no os.Pipe on " + runtime.GOOS)
 	}
 	if IsEnabled() {
@@ -350,7 +350,7 @@ func isMemoryConstrained() bool {
 // And concurrently with all that start/stop trace 3 times.
 func TestTraceStressStartStop(t *testing.T) {
 	switch runtime.GOOS {
-	case "js", "wasi":
+	case "js", "wasip1":
 		t.Skip("no os.Pipe on " + runtime.GOOS)
 	}
 	if IsEnabled() {

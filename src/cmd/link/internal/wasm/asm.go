@@ -113,7 +113,7 @@ func readWasmImport(ldr *loader.Loader, s loader.Sym) obj.WasmImport {
 }
 
 var wasmFuncTypes = map[string]*wasmFuncType{
-	"_rt0_wasm_wasi":          {Params: []byte{}},                                         //
+	"_rt0_wasm_wasip1":        {Params: []byte{}},                                         //
 	"wasm_export__start":      {},                                                         //
 	"wasm_export_run":         {Params: []byte{I32, I32}},                                 // argc, argv
 	"wasm_export_resume":      {Params: []byte{}},                                         //
@@ -452,9 +452,9 @@ func writeExportSec(ctxt *ld.Link, ldr *loader.Loader, lenHostImports int) {
 	sizeOffset := writeSecHeader(ctxt, sectionExport)
 
 	switch buildcfg.GOOS {
-	case "wasi":
+	case "wasip1":
 		writeUleb128(ctxt.Out, 2) // number of exports
-		s := ldr.Lookup("_rt0_wasm_wasi", 0)
+		s := ldr.Lookup("_rt0_wasm_wasip1", 0)
 		idx := uint32(lenHostImports) + uint32(ldr.SymValue(s)>>16) - funcValueOffset
 		writeName(ctxt.Out, "_start")       // the wasi entrypoint
 		ctxt.Out.WriteByte(0x00)            // func export

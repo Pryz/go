@@ -11,7 +11,7 @@ import (
 )
 
 func TestOpenFileLimit(t *testing.T) {
-	if runtime.GOOS == "wasi" {
+	if runtime.GOOS == "wasip1" {
 		t.Skip("setting rlimit is not supported on " + runtime.GOOS)
 	}
 	// For open file count,

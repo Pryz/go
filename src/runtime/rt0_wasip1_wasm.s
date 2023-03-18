@@ -2,12 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build wasi
+//go:build wasip1
 
 #include "go_asm.h"
 #include "textflag.h"
 
-TEXT _rt0_wasm_wasi(SB),NOSPLIT,$0
+TEXT _rt0_wasm_wasip1(SB),NOSPLIT,$0
 	MOVD $runtime·wasmStack+(m0Stack__size-16)(SB), SP
 
 	I32Const $0 // entry PC_B

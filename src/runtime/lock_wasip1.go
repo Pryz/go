@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build wasi
+//go:build wasip1
 
 package runtime
 
@@ -86,8 +86,8 @@ func notetsleepg(n *note, ns int64) bool {
 		if n.key != 0 {
 			return true
 		}
-		if __wasi_sched_yield() != 0 {
-			throw("__wasi_sched_yield failed")
+		if __wasip1_sched_yield() != 0 {
+			throw("__wasip1_sched_yield failed")
 		}
 		Gosched()
 		if ns >= 0 && nanotime() >= deadline {

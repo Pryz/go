@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build wasi
+//go:build wasip1
 
 package runtime
 
@@ -17,179 +17,179 @@ type uintptr_t uint32
 type size_t uint32
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-errno-variant
-type __wasi_errno_t uint32
+type __wasip1_errno_t uint32
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-filesize-u64
-type __wasi_filesize_t uint64
+type __wasip1_filesize_t uint64
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-timestamp-u64
-type __wasi_timestamp_t uint64
+type __wasip1_timestamp_t uint64
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd-handle
-type __wasi_fd_t uint32
+type __wasip1_fd_t uint32
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-clockid-variant
-type __wasi_clockid_t uint32
+type __wasip1_clockid_t uint32
 
 const (
-	__WASI_CLOCK_REALTIME           __wasi_clockid_t = 0
-	__WASI_CLOCK_MONOTONIC          __wasi_clockid_t = 1
-	__WASI_CLOCK_PROCESS_CPUTIME_ID __wasi_clockid_t = 2
-	__WASI_CLOCK_THREAD_CPUTIME_ID  __wasi_clockid_t = 3
+	__WASIP1_CLOCK_REALTIME           __wasip1_clockid_t = 0
+	__WASIP1_CLOCK_MONOTONIC          __wasip1_clockid_t = 1
+	__WASIP1_CLOCK_PROCESS_CPUTIME_ID __wasip1_clockid_t = 2
+	__WASIP1_CLOCK_THREAD_CPUTIME_ID  __wasip1_clockid_t = 3
 )
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-iovec-record
-type __wasi_iovec_t struct {
+type __wasip1_iovec_t struct {
 	buf     uintptr_t
 	buf_len size_t
 }
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-ciovec-record
-type __wasi_ciovec_t struct {
+type __wasip1_ciovec_t struct {
 	buf     uintptr_t
 	buf_len size_t
 }
 
 //go:wasmimport wasi_snapshot_preview1 args_get
 //go:noescape
-func __wasi_args_get(
+func __wasip1_args_get(
 	argv *uintptr_t,
 	argv_buf *byte,
-) __wasi_errno_t
+) __wasip1_errno_t
 
 //go:wasmimport wasi_snapshot_preview1 args_sizes_get
 //go:noescape
-func __wasi_args_sizes_get(
+func __wasip1_args_sizes_get(
 	argc *size_t,
 	argv_buf_size *size_t,
-) __wasi_errno_t
+) __wasip1_errno_t
 
 //go:wasmimport wasi_snapshot_preview1 clock_time_get
 //go:noescape
-func __wasi_clock_time_get(
-	clock_id __wasi_clockid_t,
-	precision __wasi_timestamp_t,
-	time *__wasi_timestamp_t,
-) __wasi_errno_t
+func __wasip1_clock_time_get(
+	clock_id __wasip1_clockid_t,
+	precision __wasip1_timestamp_t,
+	time *__wasip1_timestamp_t,
+) __wasip1_errno_t
 
 //go:wasmimport wasi_snapshot_preview1 environ_get
 //go:noescape
-func __wasi_environ_get(
+func __wasip1_environ_get(
 	environ *uintptr_t,
 	environ_buf *byte,
-) __wasi_errno_t
+) __wasip1_errno_t
 
 //go:wasmimport wasi_snapshot_preview1 environ_sizes_get
 //go:noescape
-func __wasi_environ_sizes_get(
+func __wasip1_environ_sizes_get(
 	environ_count *size_t,
 	environ_buf_size *size_t,
-) __wasi_errno_t
+) __wasip1_errno_t
 
 //go:wasmimport wasi_snapshot_preview1 proc_exit
-func __wasi_proc_exit(
+func __wasip1_proc_exit(
 	code int32,
 )
 
 //go:wasmimport wasi_snapshot_preview1 fd_write
 //go:noescape
-func __wasi_fd_write(
-	fd __wasi_fd_t,
-	iovs *__wasi_ciovec_t,
+func __wasip1_fd_write(
+	fd __wasip1_fd_t,
+	iovs *__wasip1_ciovec_t,
 	iovs_len size_t,
 	nwritten *size_t,
-) __wasi_errno_t
+) __wasip1_errno_t
 
 //go:wasmimport wasi_snapshot_preview1 sched_yield
-func __wasi_sched_yield() __wasi_errno_t
+func __wasip1_sched_yield() __wasip1_errno_t
 
 //go:wasmimport wasi_snapshot_preview1 random_get
 //go:noescape
-func __wasi_random_get(
+func __wasip1_random_get(
 	buf *byte,
 	buf_len size_t,
-) __wasi_errno_t
+) __wasip1_errno_t
 
-type __wasi_eventtype_t uint8
-
-const (
-	__wasi_eventtype_clock __wasi_eventtype_t = iota
-	__wasi_eventtype_fd_read
-	__wasi_eventtype_fd_write
-)
-
-type __wasi_eventrwflags_t uint16
+type __wasip1_eventtype_t uint8
 
 const (
-	__wasi_fd_readwrite_hangup __wasi_eventrwflags_t = 1 << iota
+	__wasip1_eventtype_clock __wasip1_eventtype_t = iota
+	__wasip1_eventtype_fd_read
+	__wasip1_eventtype_fd_write
 )
 
-type __wasi_userdata_t uint64
-
-type __wasi_event_t struct {
-	userdata    __wasi_userdata_t
-	error       uint16 // TODO: this should be __wasi_errno_t but the compiler rejects uint16 as argument to imported functions
-	typ         __wasi_eventtype_t
-	fdReadwrite __wasi_event_fd_readwrite_t
-}
-
-type __wasi_event_fd_readwrite_t struct {
-	nbytes __wasi_filesize_t
-	flags  __wasi_eventrwflags_t
-}
-
-type __wasi_subclockflags_t uint16
+type __wasip1_eventrwflags_t uint16
 
 const (
-	__wasi_subscription_clock_abstime __wasi_subclockflags_t = 1 << iota
+	__wasip1_fd_readwrite_hangup __wasip1_eventrwflags_t = 1 << iota
 )
 
-type __wasi_subscription_clock_t struct {
-	id        __wasi_clockid_t
-	timeout   __wasi_timestamp_t
-	precision __wasi_timestamp_t
-	flags     __wasi_subclockflags_t
+type __wasip1_userdata_t uint64
+
+type __wasip1_event_t struct {
+	userdata    __wasip1_userdata_t
+	error       uint16 // TODO: this should be __wasip1_errno_t but the compiler rejects uint16 as argument to imported functions
+	typ         __wasip1_eventtype_t
+	fdReadwrite __wasip1_event_fd_readwrite_t
 }
 
-type __wasi_subscription_t struct {
-	userdata __wasi_userdata_t
-	u        __wasi_subscription_u
+type __wasip1_event_fd_readwrite_t struct {
+	nbytes __wasip1_filesize_t
+	flags  __wasip1_eventrwflags_t
 }
 
-type __wasi_subscription_u [5]uint64
+type __wasip1_subclockflags_t uint16
 
-func (u *__wasi_subscription_u) __wasi_eventtype_t() *__wasi_eventtype_t {
-	return (*__wasi_eventtype_t)(unsafe.Pointer(&u[0]))
+const (
+	__wasip1_subscription_clock_abstime __wasip1_subclockflags_t = 1 << iota
+)
+
+type __wasip1_subscription_clock_t struct {
+	id        __wasip1_clockid_t
+	timeout   __wasip1_timestamp_t
+	precision __wasip1_timestamp_t
+	flags     __wasip1_subclockflags_t
 }
 
-func (u *__wasi_subscription_u) __wasi_subscription_clock_t() *__wasi_subscription_clock_t {
-	return (*__wasi_subscription_clock_t)(unsafe.Pointer(&u[1]))
+type __wasip1_subscription_t struct {
+	userdata __wasip1_userdata_t
+	u        __wasip1_subscription_u
+}
+
+type __wasip1_subscription_u [5]uint64
+
+func (u *__wasip1_subscription_u) __wasip1_eventtype_t() *__wasip1_eventtype_t {
+	return (*__wasip1_eventtype_t)(unsafe.Pointer(&u[0]))
+}
+
+func (u *__wasip1_subscription_u) __wasip1_subscription_clock_t() *__wasip1_subscription_clock_t {
+	return (*__wasip1_subscription_clock_t)(unsafe.Pointer(&u[1]))
 }
 
 //go:wasmimport wasi_snapshot_preview1 poll_oneoff
 //go:noescape
-func __wasi_poll_oneoff(
-	in *__wasi_subscription_t,
-	out *__wasi_event_t,
+func __wasip1_poll_oneoff(
+	in *__wasip1_subscription_t,
+	out *__wasip1_event_t,
 	nsubscriptions size_t,
 	nevents *size_t,
-) __wasi_errno_t
+) __wasip1_errno_t
 
 func exit(code int32) {
-	__wasi_proc_exit(code)
+	__wasip1_proc_exit(code)
 }
 
 func write1(fd uintptr, p unsafe.Pointer, n int32) int32 {
 	if fd > 2 {
 		throw("runtime.write to fd > 2 is unsupported")
 	}
-	iov := __wasi_ciovec_t{
+	iov := __wasip1_ciovec_t{
 		buf:     uintptr_t(uintptr(p)),
 		buf_len: size_t(n),
 	}
 	var nwritten size_t
-	if __wasi_fd_write(__wasi_fd_t(fd), &iov, 1, &nwritten) != 0 {
-		throw("__wasi_fd_write failed")
+	if __wasip1_fd_write(__wasip1_fd_t(fd), &iov, 1, &nwritten) != 0 {
+		throw("__wasip1_fd_write failed")
 	}
 	return int32(nwritten)
 }
@@ -200,19 +200,19 @@ func closefd(fd int32) int32                         { panic("not implemented") 
 func read(fd int32, p unsafe.Pointer, n int32) int32 { panic("not implemented") }
 
 func usleep(usec uint32) {
-	var in __wasi_subscription_t
-	var out __wasi_event_t
+	var in __wasip1_subscription_t
+	var out __wasip1_event_t
 	var nevents size_t
 
-	eventtype := in.u.__wasi_eventtype_t()
-	*eventtype = __wasi_eventtype_clock
+	eventtype := in.u.__wasip1_eventtype_t()
+	*eventtype = __wasip1_eventtype_clock
 
-	subscription := in.u.__wasi_subscription_clock_t()
-	subscription.id = __WASI_CLOCK_MONOTONIC
-	subscription.timeout = __wasi_timestamp_t(usec) * 1e3
+	subscription := in.u.__wasip1_subscription_clock_t()
+	subscription.id = __WASIP1_CLOCK_MONOTONIC
+	subscription.timeout = __wasip1_timestamp_t(usec) * 1e3
 	subscription.precision = 1e3
 
-	if __wasi_poll_oneoff(&in, &out, 1, &nevents) != 0 {
+	if __wasip1_poll_oneoff(&in, &out, 1, &nevents) != 0 {
 		throw("wasi_snapshot_preview1.poll_oneoff")
 	}
 }
@@ -295,8 +295,8 @@ func crash() {
 }
 
 func getRandomData(r []byte) {
-	if __wasi_random_get(&r[0], size_t(len(r))) != 0 {
-		throw("__wasi_random_get failed")
+	if __wasip1_random_get(&r[0], size_t(len(r))) != 0 {
+		throw("__wasip1_random_get failed")
 	}
 }
 
@@ -304,16 +304,16 @@ func goenvs() {
 	// arguments
 	var argc size_t
 	var argv_buf_size size_t
-	if __wasi_args_sizes_get(&argc, &argv_buf_size) != 0 {
-		throw("__wasi_args_sizes_get failed")
+	if __wasip1_args_sizes_get(&argc, &argv_buf_size) != 0 {
+		throw("__wasip1_args_sizes_get failed")
 	}
 
 	argslice = make([]string, argc)
 	if argc > 0 {
 		argv := make([]uintptr_t, argc)
 		argv_buf := make([]byte, argv_buf_size)
-		if __wasi_args_get(&argv[0], &argv_buf[0]) != 0 {
-			throw("__wasi_args_get failed")
+		if __wasip1_args_get(&argv[0], &argv_buf[0]) != 0 {
+			throw("__wasip1_args_get failed")
 		}
 
 		for i := range argslice {
@@ -329,16 +329,16 @@ func goenvs() {
 	// environment
 	var environ_count size_t
 	var environ_buf_size size_t
-	if __wasi_environ_sizes_get(&environ_count, &environ_buf_size) != 0 {
-		throw("__wasi_environ_sizes_get failed")
+	if __wasip1_environ_sizes_get(&environ_count, &environ_buf_size) != 0 {
+		throw("__wasip1_environ_sizes_get failed")
 	}
 
 	envs = make([]string, environ_count)
 	if environ_count > 0 {
 		environ := make([]uintptr_t, environ_count)
 		environ_buf := make([]byte, environ_buf_size)
-		if __wasi_environ_get(&environ[0], &environ_buf[0]) != 0 {
-			throw("__wasi_environ_get failed")
+		if __wasip1_environ_get(&environ[0], &environ_buf[0]) != 0 {
+			throw("__wasip1_environ_get failed")
 		}
 
 		for i := range envs {
@@ -357,17 +357,17 @@ func walltime() (sec int64, nsec int32) {
 }
 
 func walltime1() (sec int64, nsec int32) {
-	var time __wasi_timestamp_t
-	if __wasi_clock_time_get(__WASI_CLOCK_REALTIME, 0, &time) != 0 {
-		throw("__wasi_clock_time_get failed")
+	var time __wasip1_timestamp_t
+	if __wasip1_clock_time_get(__WASIP1_CLOCK_REALTIME, 0, &time) != 0 {
+		throw("__wasip1_clock_time_get failed")
 	}
 	return int64(time / 1000000000), int32(time % 1000000000)
 }
 
 func nanotime1() int64 {
-	var time __wasi_timestamp_t
-	if __wasi_clock_time_get(__WASI_CLOCK_MONOTONIC, 0, &time) != 0 {
-		throw("__wasi_clock_time_get failed")
+	var time __wasip1_timestamp_t
+	if __wasip1_clock_time_get(__WASIP1_CLOCK_MONOTONIC, 0, &time) != 0 {
+		throw("__wasip1_clock_time_get failed")
 	}
 	return int64(time)
 }

@@ -666,7 +666,7 @@ func (dir dirFS) Stat(name string) (fs.FileInfo, error) {
 	return f, nil
 }
 
-// FIXME(julien): join is returning an invalid argument error with wasi
+// FIXME(julien): join is returning an invalid argument error with wasip1
 // join returns the path for name in dir.
 func (dir dirFS) join(name string) (string, error) {
 	if dir == "" {

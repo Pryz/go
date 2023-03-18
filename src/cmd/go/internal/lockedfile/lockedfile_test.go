@@ -4,7 +4,7 @@
 
 // js and wasi do not support inter-process file locking.
 //
-//go:build !js && !wasi
+//go:build !js && !wasip1
 
 package lockedfile_test
 

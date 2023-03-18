@@ -1256,8 +1256,8 @@ func checkMode(t *testing.T, path string, mode FileMode) {
 func TestChmod(t *testing.T) {
 	t.Parallel()
 
-	// Chmod is not supported on wasi.
-	if runtime.GOOS == "wasi" {
+	// Chmod is not supported on wasip1.
+	if runtime.GOOS == "wasip1" {
 		t.Skip("Chmod is not supported on " + runtime.GOOS)
 	}
 	f := newFile("TestChmod", t)
@@ -2159,7 +2159,7 @@ func TestLargeWriteToConsole(t *testing.T) {
 func TestStatDirModeExec(t *testing.T) {
 	t.Parallel()
 
-	if runtime.GOOS == "wasi" {
+	if runtime.GOOS == "wasip1" {
 		t.Skip("Chmod is not supported on " + runtime.GOOS)
 	}
 
@@ -2354,7 +2354,7 @@ func TestLongPath(t *testing.T) {
 					if dir.Size() != filesize || filesize != wantSize {
 						t.Errorf("Size(%q) is %d, len(ReadFile()) is %d, want %d", path, dir.Size(), filesize, wantSize)
 					}
-					if runtime.GOOS != "wasi" { // Chmod is not supported on wasi
+					if runtime.GOOS != "wasip1" { // Chmod is not supported on wasip1
 						err = Chmod(path, dir.Mode())
 						if err != nil {
 							t.Fatalf("Chmod(%q) failed: %v", path, err)

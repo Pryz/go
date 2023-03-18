@@ -1,4 +1,4 @@
-package wasi_test
+package wasip1_test
 
 import (
 	"fmt"
@@ -7,24 +7,24 @@ import (
 	"path/filepath"
 	"testing"
 	"testing/fstest"
-    //"io/fs"
+	//"io/fs"
 )
 
-func TestFsys(t*testing.T) {
-    // `tmp` will be created at the root of the FS.
+func TestFsys(t *testing.T) {
+	// `tmp` will be created at the root of the FS.
 	tmp := "wasi_testfs"
 
-    fmt.Println("Create filesystem")
+	fmt.Println("Create filesystem")
 	err := os.Mkdir(tmp, 0777)
 	if err != nil {
 		log.Fatal("MkdirTemp: ", err)
 	}
 	defer func() {
-        fmt.Println("Cleaning things up")
-        //os.RemoveAll(tmp)
-    }()
+		fmt.Println("Cleaning things up")
+		//os.RemoveAll(tmp)
+	}()
 
-    //tmp = "./" + tmp
+	//tmp = "./" + tmp
 	//tmpfs := os.DirFS(tmp)
 	tmpfs := os.DirFS("/")
 
@@ -32,28 +32,28 @@ func TestFsys(t*testing.T) {
 		t.Fatal(err)
 	}
 
-    //fmt.Println("Open filesystem")
-    //f, err := tmpfs.Open(tmp)
-    //if err != nil {
-    //    fmt.Println("failed to open dir ", err)
-    //    t.Fatal(err)
-    //}
+	//fmt.Println("Open filesystem")
+	//f, err := tmpfs.Open(tmp)
+	//if err != nil {
+	//    fmt.Println("failed to open dir ", err)
+	//    t.Fatal(err)
+	//}
 
-    //d, ok := f.(fs.ReadDirFile)
-    //if !ok {
-    //    t.Fatalf("not a directory")
-    //}
+	//d, ok := f.(fs.ReadDirFile)
+	//if !ok {
+	//    t.Fatalf("not a directory")
+	//}
 
-    //entries, err := d.ReadDir(-1)
-    //if err != nil {
-    //    t.Fatal(err)
-    //}
+	//entries, err := d.ReadDir(-1)
+	//if err != nil {
+	//    t.Fatal(err)
+	//}
 
-    hello_path := "wasi_testfs/hello"
-    link_path := "wasi_testfs/hello.link"
+	hello_path := "wasi_testfs/hello"
+	link_path := "wasi_testfs/hello.link"
 
 	if err := os.Symlink(hello_path, link_path); err != nil {
-	    t.Fatal(err)
+		t.Fatal(err)
 	}
 
 	if err := fstest.TestFS(tmpfs, "hello", "hello.link"); err != nil {
@@ -130,7 +130,7 @@ func TestFilesystem(t *testing.T) {
 
 	// WASI doesn't support symlink with absolute path ?
 	if err := os.Chdir(tmp); err != nil {
-	    t.Fatal(err)
+		t.Fatal(err)
 	}
 
 	//if err := os.Symlink("hello", "hello.link"); err != nil {

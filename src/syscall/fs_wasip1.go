@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build wasi
+//go:build wasip1
 
 package syscall
 
@@ -48,7 +48,7 @@ type Stat_t struct {
 
 	Mode int // FIXME
 
-	// Uid and Gid are always zero on wasi platforms
+	// Uid and Gid are always zero on wasip1 platforms
 	Uid uint32
 	Gid uint32
 }

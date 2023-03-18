@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build (wasm && (wasi || js)) || windows
+//go:build (wasm && (wasip1 || js)) || windows
 
 package net
 

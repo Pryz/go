@@ -1,11 +1,11 @@
 # WASI implementation state
 
-Building a binary using `GOOS=wasi` currently works.
+Building a binary using `GOOS=wasip1` currently works.
 
 Example:
 
 ```
-GOOS=wasi GOARCH=wasm GOROOT=$PWD/../.. ../../bin/go test -c -run TestFilesystem wasi_test.go
+GOOS=wasip1 GOARCH=wasm GOROOT=$PWD/../.. ../../bin/go test -c -run TestFilesystem wasi_test.go
 ```
 
 And some of the stblib tests are passing but there is still quite a bit of work to be done:
@@ -38,11 +38,11 @@ $ go install github.com/tetratelabs/wazero/cmd/wazero@latest
 You can then run the tests on either runtime. By default, it will use `wasmtime`:
 
 ```
-$ GOOS=wasi GOARCH=wasm GOROOT=$PWD/../.. PATH=$PWD/../../misc/wasm/:$PATH ../../bin/go test -timeout 10s -v ../../src/bufio/example_test.go
+$ GOOS=wasip1 GOARCH=wasm GOROOT=$PWD/../.. PATH=$PWD/../../misc/wasm/:$PATH ../../bin/go test -timeout 10s -v ../../src/bufio/example_test.go
 ```
 
 Set the environment variable `RUNTIME=wazero` to use `wazero`:
 
 ```
-$ RUNTIME=wazero GOOS=wasi GOARCH=wasm GOROOT=$PWD/../.. PATH=$PWD/../../misc/wasm/:$PATH ../../bin/go test -timeout 10s -v ../../src/bufio/example_test.go
+$ RUNTIME=wazero GOOS=wasip1 GOARCH=wasm GOROOT=$PWD/../.. PATH=$PWD/../../misc/wasm/:$PATH ../../bin/go test -timeout 10s -v ../../src/bufio/example_test.go
 ```
