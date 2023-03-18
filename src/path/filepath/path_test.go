@@ -612,7 +612,7 @@ func testWalk(t *testing.T, walk func(string, fs.WalkDirFunc) error, errVisit in
 		// Test permission errors. Only possible if we're not root
 		// and only on some file systems (AFS, FAT).  To avoid errors during
 		// all.bash on those file systems, skip during go test -short.
-		if runtime.GOOS == "windows" || runtime.GOOS == "wasi" {
+		if runtime.GOOS == "windows" || runtime.GOOS == "wasip1" {
 			t.Skip("skipping on " + runtime.GOOS)
 		}
 		if os.Getuid() == 0 {
@@ -1374,11 +1374,7 @@ func TestAbs(t *testing.T) {
 		}
 		absinfo, err := os.Stat(abspath)
 		if err != nil || !os.SameFile(absinfo, info) {
-			if runtime.GOOS == "wasi" {
-				t.Logf("Abs(%q)=%q, not the same file but inodes are not supported on "+runtime.GOOS, path, abspath)
-			} else {
-				t.Errorf("Abs(%q)=%q, not the same file", path, abspath)
-			}
+			t.Errorf("Abs(%q)=%q, not the same file", path, abspath)
 		}
 		if !filepath.IsAbs(abspath) {
 			t.Errorf("Abs(%q)=%q, not an absolute path", path, abspath)
