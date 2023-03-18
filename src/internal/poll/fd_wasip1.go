@@ -170,6 +170,7 @@ type FD struct {
 	// Whether this is a file rather than a network socket.
 	isFile bool
 
+	typ  syscall.Filetype_t
 	next syscall.Dircookie_t
 }
 
@@ -758,31 +759,29 @@ func (fd *FD) Seek(offset int64, whence int) (int64, error) {
 		return 0, err
 	}
 	defer fd.decref()
+
+	if fd.typ == syscall.FILETYPE_UNKNOWN {
+		var stat syscall.Stat_t
+		if err := fd.Fstat(&stat); err != nil {
+			return 0, err
+		}
+		fd.typ = stat.Filetype
+	}
+
+	if fd.typ == syscall.FILETYPE_DIRECTORY {
+		// If the file descriptor is opened on a directory, we reset the readdir
+		// cookie when seeking back to the beginning to allow reusing the file
+		// descriptor to scan the directory again.
+		if offset == 0 && whence == 0 {
+			fd.next = 0
+			return 0, nil
+		} else {
+			return 0, syscall.EINVAL
+		}
+	}
+
 	return syscall.Seek(fd.Sysfd, offset, whence)
 }
-
-//// ReadDirent wraps syscall.ReadDirent.
-//// We treat this like an ordinary system call rather than a call
-//// that tries to fill the buffer.
-//func (fd *FD) ReadDirent(buf []byte) (int, error) {
-//	if err := fd.incref(); err != nil {
-//		return 0, err
-//	}
-//	defer fd.decref()
-//	for {
-//		n, err := ignoringEINTRIO(syscall.ReadDirent, fd.Sysfd, buf)
-//		if err != nil {
-//			n = 0
-//			if err == syscall.EAGAIN && fd.pd.pollable() {
-//				if err = fd.pd.waitRead(fd.isFile); err == nil {
-//					continue
-//				}
-//			}
-//		}
-//		// Do not call eofError; caller does not expect to see io.EOF.
-//		return n, err
-//	}
-//}
 
 // Fchmod wraps syscall.Fchmod.
 func (fd *FD) Fchmod(mode uint32) error {
