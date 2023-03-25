@@ -6,7 +6,7 @@
 // waitid/wait6. netbsd implements wait6, but that is causing test
 // failures, see issue #48789.
 
-//go:build aix || darwin || (js && wasm) || openbsd || solaris || (wasip1 && wasm)
+//go:build aix || darwin || (js && wasm) || openbsd || solaris || wasip1
 
 package os
 
