@@ -46,7 +46,7 @@ func HasGoBuild() bool {
 		return false
 	}
 	switch runtime.GOOS {
-	case "android", "js", "ios":
+	case "android", "js", "ios", "wasip1":
 		return false
 	}
 	return true
@@ -239,14 +239,14 @@ func HasSrc() bool {
 // HasExternalNetwork reports whether the current system can use
 // external (non-localhost) networks.
 func HasExternalNetwork() bool {
-	return !testing.Short() && runtime.GOOS != "js"
+	return !testing.Short() && runtime.GOOS != "js" && runtime.GOOS != "wasip1"
 }
 
 // MustHaveExternalNetwork checks that the current system can use
 // external (non-localhost) networks.
 // If not, MustHaveExternalNetwork calls t.Skip with an explanation.
 func MustHaveExternalNetwork(t testing.TB) {
-	if runtime.GOOS == "js" {
+	if runtime.GOOS == "js" || runtime.GOOS == "wasip1" {
 		t.Skipf("skipping test: no external network on %s", runtime.GOOS)
 	}
 	if testing.Short() {

@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build unix
+//go:build unix || wasip1
 
 package testenv
 
@@ -31,6 +31,9 @@ func syscallIsNotSupported(err error) bool {
 		case syscall.EINVAL:
 			// Some containers return EINVAL instead of EPERM if a system call is
 			// denied by security policy.
+			return true
+		case syscall.ENOSYS:
+			// js and wasip1 return ENOSYS for unsupported syscalls.
 			return true
 		}
 	}
