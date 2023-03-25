@@ -6,6 +6,7 @@ package work
 
 import (
 	"fmt"
+	"internal/testenv"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -224,8 +225,6 @@ func TestRespectSetgidDir(t *testing.T) {
 	switch runtime.GOOS {
 	case "ios":
 		t.Skip("can't set SetGID bit with chmod on iOS")
-	case "windows", "plan9":
-		t.Skip("chown/chmod setgid are not supported on Windows or Plan 9")
 	}
 
 	var b Builder
@@ -250,11 +249,17 @@ func TestRespectSetgidDir(t *testing.T) {
 	// the new temporary directory.
 	err = os.Chown(setgiddir, os.Getuid(), os.Getgid())
 	if err != nil {
+		if testenv.SyscallIsNotSupported(err) {
+			t.Skip("chown is not supported on " + runtime.GOOS)
+		}
 		t.Fatal(err)
 	}
 
 	// Change setgiddir's permissions to include the SetGID bit.
 	if err := os.Chmod(setgiddir, 0755|fs.ModeSetgid); err != nil {
+		if testenv.SyscallIsNotSupported(err) {
+			t.Skip("chmod is not supported on " + runtime.GOOS)
+		}
 		t.Fatal(err)
 	}
 
