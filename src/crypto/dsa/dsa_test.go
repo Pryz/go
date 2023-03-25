@@ -7,6 +7,7 @@ package dsa
 import (
 	"crypto/rand"
 	"math/big"
+	"runtime"
 	"testing"
 )
 
@@ -65,6 +66,9 @@ func testParameterGeneration(t *testing.T, sizes ParameterSizes, L, N int) {
 func TestParameterGeneration(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping parameter generation test in short mode")
+	}
+	if runtime.GOOS == "wasip1" {
+		t.Skip("skipping parameter generation test because it is too slow on wasip1")
 	}
 
 	testParameterGeneration(t, L1024N160, 1024, 160)
