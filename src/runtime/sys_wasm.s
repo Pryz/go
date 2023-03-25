@@ -86,9 +86,6 @@ TEXT runtime·exitThread(SB), NOSPLIT, $0-0
 TEXT runtime·osyield(SB), NOSPLIT, $0-0
 	UNDEF
 
-TEXT runtime·usleep(SB), NOSPLIT, $0-0
-	RET // TODO(neelance): implement usleep
-
 TEXT runtime·currentMemory(SB), NOSPLIT, $0
 	Get SP
 	CurrentMemory
