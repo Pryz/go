@@ -16,7 +16,7 @@ func approx(x float64) {
 	// s390x:"FIDBR\t[$]6"
 	// arm64:"FRINTPD"
 	// ppc64x:"FRIP"
-	// wasm:"F64Ceil"
+	// js/wasm/:"F64Ceil"
 	sink64[0] = math.Ceil(x)
 
 	// amd64/v2:-".*x86HasSSE41" amd64/v3:-".*x86HasSSE41"
@@ -24,7 +24,7 @@ func approx(x float64) {
 	// s390x:"FIDBR\t[$]7"
 	// arm64:"FRINTMD"
 	// ppc64x:"FRIM"
-	// wasm:"F64Floor"
+	// js/wasm/:"F64Floor"
 	sink64[1] = math.Floor(x)
 
 	// s390x:"FIDBR\t[$]1"
@@ -37,14 +37,14 @@ func approx(x float64) {
 	// s390x:"FIDBR\t[$]5"
 	// arm64:"FRINTZD"
 	// ppc64x:"FRIZ"
-	// wasm:"F64Trunc"
+	// js/wasm/:"F64Trunc"
 	sink64[3] = math.Trunc(x)
 
 	// amd64/v2:-".*x86HasSSE41" amd64/v3:-".*x86HasSSE41"
 	// amd64:"ROUNDSD\t[$]0"
 	// s390x:"FIDBR\t[$]4"
 	// arm64:"FRINTND"
-	// wasm:"F64Nearest"
+	// js/wasm/:"F64Nearest"
 	sink64[4] = math.RoundToEven(x)
 }
 
@@ -55,7 +55,7 @@ func sqrt(x float64) float64 {
 	// arm/7:"SQRTD"
 	// mips/hardfloat:"SQRTD" mips/softfloat:-"SQRTD"
 	// mips64/hardfloat:"SQRTD" mips64/softfloat:-"SQRTD"
-	// wasm:"F64Sqrt"
+	// js/wasm/:"F64Sqrt"
 	// ppc64x:"FSQRT"
 	return math.Sqrt(x)
 }
@@ -67,7 +67,7 @@ func sqrt32(x float32) float32 {
 	// arm/7:"SQRTF"
 	// mips/hardfloat:"SQRTF" mips/softfloat:-"SQRTF"
 	// mips64/hardfloat:"SQRTF" mips64/softfloat:-"SQRTF"
-	// wasm:"F32Sqrt"
+	// js/wasm/:"F32Sqrt"
 	// ppc64x:"FSQRTS"
 	return float32(math.Sqrt(float64(x)))
 }
@@ -79,7 +79,7 @@ func abs(x, y float64) {
 	// s390x:"LPDFR\t",-"MOVD\t"     (no integer load/store)
 	// ppc64x:"FABS\t"
 	// riscv64:"FABSD\t"
-	// wasm:"F64Abs"
+	// js/wasm/:"F64Abs"
 	// arm/6:"ABSD\t"
 	sink64[0] = math.Abs(x)
 
@@ -101,7 +101,7 @@ func copysign(a, b, c float64) {
 	// s390x:"CPSDR",-"MOVD"         (no integer load/store)
 	// ppc64x:"FCPSGN"
 	// riscv64:"FSGNJD"
-	// wasm:"F64Copysign"
+	// js/wasm/:"F64Copysign"
 	sink64[0] = math.Copysign(a, b)
 
 	// amd64:"BTSQ\t[$]63"
