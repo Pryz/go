@@ -1,4 +1,4 @@
-// +build !nacl,!js
+// +build !nacl,!js,!wasip1
 // run
 
 // Copyright 2014 The Go Authors. All rights reserved.
@@ -61,15 +61,15 @@ func main() {
 		return filepath.Join(tmpDir, name)
 	}
 
-    importcfg, err := exec.Command("go", "list", "-export", "-f", "{{if .Export}}packagefile {{.ImportPath}}={{.Export}}{{end}}", "std").Output()
-    if err != nil {
-        fmt.Println(err)
-        os.Exit(1)
-    }
-    os.WriteFile(tmp("importcfg"), importcfg, 0644)
+	importcfg, err := exec.Command("go", "list", "-export", "-f", "{{if .Export}}packagefile {{.ImportPath}}={{.Export}}{{end}}", "std").Output()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	os.WriteFile(tmp("importcfg"), importcfg, 0644)
 
 	// helloworld.go is package main
-    run("go tool compile -p=main -importcfg", tmp("importcfg"), "-o", tmp("linkmain.o"), "helloworld.go")
+	run("go tool compile -p=main -importcfg", tmp("importcfg"), "-o", tmp("linkmain.o"), "helloworld.go")
 	run("go tool compile -p=main -importcfg", tmp("importcfg"), " -pack -o", tmp("linkmain.a"), "helloworld.go")
 	run("go tool link -importcfg", tmp("importcfg"), "-o", tmp("linkmain.exe"), tmp("linkmain.o"))
 	run("go tool link -importcfg", tmp("importcfg"), "-o", tmp("linkmain.exe"), tmp("linkmain.a"))

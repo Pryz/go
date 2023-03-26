@@ -4,6 +4,8 @@
 
 package time
 
+import "runtime"
+
 func init() {
 	// Force US/Pacific for time zone tests.
 	ForceUSPacificForTesting()
@@ -35,6 +37,17 @@ func disablePlatformSources() (undo func()) {
 
 var Interrupt = interrupt
 var DaysIn = daysIn
+
+func init() {
+	if runtime.GOOS == "wasip1" {
+		// There is no mechanism in wasi to interrupt the call to poll_oneoff
+		// used to implement runtime.usleep so this function does nothing, which
+		// somewhat defeats the purpose of TestSleep but we are still better off
+		// validating that time elapses when the process calls time.Sleep than
+		// skipping the test altogether.
+		Interrupt = func() {}
+	}
+}
 
 func empty(arg any, seq uintptr) {}
 
