@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build wasip1
-
 package syscall
 
 import (
@@ -121,93 +119,47 @@ func __wasip1_fd_close(fd __wasip1_fd_t) Errno
 //
 //go:wasmimport wasi_snapshot_preview1 fd_filestat_set_size
 //go:noescape
-func __wasip1_fd_filestat_set_size(
-	fd __wasip1_fd_t,
-	st_size __wasip1_filesize_t,
-) Errno
+func __wasip1_fd_filestat_set_size(fd __wasip1_fd_t, st_size __wasip1_filesize_t) Errno
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd_preadfd-fd-iovs-iovec_array-offset-filesize---resultsize-errno
 //
 //go:wasmimport wasi_snapshot_preview1 fd_pread
 //go:noescape
-func __wasip1_fd_pread(
-	fd __wasip1_fd_t,
-	iovs *__wasip1_iovec_t,
-	iovs_len size_t,
-	offset __wasip1_filesize_t,
-	nread *size_t,
-) Errno
+func __wasip1_fd_pread(fd __wasip1_fd_t, iovs *__wasip1_iovec_t, iovs_len size_t, offset __wasip1_filesize_t, nread *size_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_pwrite
 //go:noescape
-func __wasip1_fd_pwrite(
-	fd __wasip1_fd_t,
-	iovs *__wasip1_iovec_t,
-	iovs_len size_t,
-	offset __wasip1_filesize_t,
-	nwritten *size_t,
-) Errno
+func __wasip1_fd_pwrite(fd __wasip1_fd_t, iovs *__wasip1_iovec_t, iovs_len size_t, offset __wasip1_filesize_t, nwritten *size_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_read
 //go:noescape
-func __wasip1_fd_read(
-	fd __wasip1_fd_t,
-	iovs *__wasip1_iovec_t,
-	iovs_len size_t,
-	nread *size_t,
-) Errno
+func __wasip1_fd_read(fd __wasip1_fd_t, iovs *__wasip1_iovec_t, iovs_len size_t, nread *size_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_readdir
 //go:noescape
-func __wasip1_fd_readdir(
-	fd __wasip1_fd_t,
-	buf *byte,
-	buf_len size_t,
-	cookie __wasip1_dircookie_t,
-	bufused *size_t,
-) Errno
+func __wasip1_fd_readdir(fd __wasip1_fd_t, buf *byte, buf_len size_t, cookie __wasip1_dircookie_t, bufused *size_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_seek
 //go:noescape
-func __wasip1_fd_seek(
-	fd __wasip1_fd_t,
-	offset __wasip1_filedelta_t,
-	whence __wasip1_whence_t,
-	newoffset *__wasip1_filesize_t,
-) Errno
+func __wasip1_fd_seek(fd __wasip1_fd_t, offset __wasip1_filedelta_t, whence __wasip1_whence_t, newoffset *__wasip1_filesize_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_fdstat_get
 //go:noescape
-func __wasip1_fd_fdstat_get(
-	fd __wasip1_fd_t,
-	buf *__wasip1_fdstat_t,
-) Errno
+func __wasip1_fd_fdstat_get(fd __wasip1_fd_t, buf *__wasip1_fdstat_t) Errno
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd_fdstat_set_rightsfd-fd-fs_rights_base-rights-fs_rights_inheriting-rights---result-errno
 //
 //go:wasmimport wasi_snapshot_preview1 fd_fdstat_set_rights
 //go:noescape
-func __wasip1_fd_fdstat_set_rights(
-	fd __wasip1_fd_t,
-	rightsBase __wasip1_rights_t,
-	rightsInheriting __wasip1_rights_t,
-) Errno
+func __wasip1_fd_fdstat_set_rights(fd __wasip1_fd_t, rightsBase __wasip1_rights_t, rightsInheriting __wasip1_rights_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_filestat_get
 //go:noescape
-func __wasip1_fd_filestat_get(
-	fd __wasip1_fd_t,
-	buf *Stat_t,
-) Errno
+func __wasip1_fd_filestat_get(fd __wasip1_fd_t, buf *Stat_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_write
 //go:noescape
-func __wasip1_fd_write(
-	fd __wasip1_fd_t,
-	iovs *__wasip1_iovec_t,
-	iovs_len size_t,
-	nwritten *size_t,
-) Errno
+func __wasip1_fd_write(fd __wasip1_fd_t, iovs *__wasip1_iovec_t, iovs_len size_t, nwritten *size_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_sync
 //go:noescape
@@ -215,114 +167,47 @@ func __wasip1_fd_sync(fd __wasip1_fd_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_create_directory
 //go:noescape
-func __wasip1_path_create_directory(
-	fd __wasip1_fd_t,
-	path *byte,
-	path_len size_t,
-) Errno
+func __wasip1_path_create_directory(fd __wasip1_fd_t, path *byte, path_len size_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_filestat_get
 //go:noescape
-func __wasip1_path_filestat_get(
-	fd __wasip1_fd_t,
-	flags __wasip1_lookupflags_t,
-	path *byte,
-	path_len size_t,
-	buf *Stat_t,
-) Errno
+func __wasip1_path_filestat_get(fd __wasip1_fd_t, flags __wasip1_lookupflags_t, path *byte, path_len size_t, buf *Stat_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_filestat_set_times
 //go:noescape
-func __wasip1_path_filestat_set_times(
-	fd __wasip1_fd_t,
-	flags __wasip1_lookupflags_t,
-	path *byte,
-	path_len size_t,
-	st_atim __wasip1_timestamp_t,
-	st_mtim __wasip1_timestamp_t,
-	fstflags __wasip1_fstflags_t,
-) Errno
+func __wasip1_path_filestat_set_times(fd __wasip1_fd_t, flags __wasip1_lookupflags_t, path *byte, path_len size_t, st_atim __wasip1_timestamp_t, st_mtim __wasip1_timestamp_t, fstflags __wasip1_fstflags_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_link
 //go:noescape
-func __wasip1_path_link(
-	old_fd __wasip1_fd_t,
-	old_flags __wasip1_lookupflags_t,
-	old_path *byte,
-	old_path_len size_t,
-	new_fd __wasip1_fd_t,
-	new_path *byte,
-	new_path_len size_t,
-) Errno
+func __wasip1_path_link(old_fd __wasip1_fd_t, old_flags __wasip1_lookupflags_t, old_path *byte, old_path_len size_t, new_fd __wasip1_fd_t, new_path *byte, new_path_len size_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_readlink
 //go:noescape
-func __wasip1_path_readlink(
-	fd __wasip1_fd_t,
-	path *byte,
-	path_len size_t,
-	buf *byte,
-	buf_len size_t,
-	bufused *size_t,
-) Errno
+func __wasip1_path_readlink(fd __wasip1_fd_t, path *byte, path_len size_t, buf *byte, buf_len size_t, bufused *size_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_remove_directory
 //go:noescape
-func __wasip1_path_remove_directory(
-	fd __wasip1_fd_t,
-	path *byte,
-	path_len size_t,
-) Errno
+func __wasip1_path_remove_directory(fd __wasip1_fd_t, path *byte, path_len size_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_rename
 //go:noescape
-func __wasip1_path_rename(
-	old_fd __wasip1_fd_t,
-	old_path *byte,
-	old_path_len size_t,
-	new_fd __wasip1_fd_t,
-	new_path *byte,
-	new_path_len size_t,
-) Errno
+func __wasip1_path_rename(old_fd __wasip1_fd_t, old_path *byte, old_path_len size_t, new_fd __wasip1_fd_t, new_path *byte, new_path_len size_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_symlink
 //go:noescape
-func __wasip1_path_symlink(
-	old_path *byte,
-	old_path_len size_t,
-	fd __wasip1_fd_t,
-	new_path *byte,
-	new_path_len size_t,
-) Errno
+func __wasip1_path_symlink(old_path *byte, old_path_len size_t, fd __wasip1_fd_t, new_path *byte, new_path_len size_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_unlink_file
 //go:noescape
-func __wasip1_path_unlink_file(
-	fd __wasip1_fd_t,
-	path *byte,
-	path_len size_t,
-) Errno
+func __wasip1_path_unlink_file(fd __wasip1_fd_t, path *byte, path_len size_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_open
 //go:noescape
-func __wasip1_path_open(
-	rootFD __wasip1_fd_t,
-	dirflags __wasip1_lookupflags_t,
-	path *byte,
-	path_len size_t,
-	oflags __wasip1_oflags_t,
-	fs_rights_base __wasip1_rights_t,
-	fs_rights_inheriting __wasip1_rights_t,
-	fs_flags __wasip1_fdflags_t,
-	fd *__wasip1_fd_t,
-) Errno
+func __wasip1_path_open(rootFD __wasip1_fd_t, dirflags __wasip1_lookupflags_t, path *byte, path_len size_t, oflags __wasip1_oflags_t, fs_rights_base __wasip1_rights_t, fs_rights_inheriting __wasip1_rights_t, fs_flags __wasip1_fdflags_t, fd *__wasip1_fd_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 random_get
 //go:noescape
-func __wasip1_random_get(
-	buf *byte,
-	buf_len size_t,
-) Errno
+func __wasip1_random_get(buf *byte, buf_len size_t) Errno
 
 type __wasip1_preopentype uint8
 
@@ -353,8 +238,8 @@ type opendir struct {
 }
 
 // List of preopen directories that were exposed by the runtime. The first one
-// is assumed to the be root directory of the file system, and other others are
-// seen as mount points at sub paths of the root.
+// is assumed to the be root directory of the file system, and others are seen
+// as mount points at sub paths of the root.
 var preopens []opendir
 
 // Current working directory. We maintain this as a string and resolve paths in
@@ -371,8 +256,8 @@ func init() {
 	// for standard input and outputs.
 	for preopenFd := __wasip1_fd_t(3); ; preopenFd++ {
 		var prestat __wasip1_prestat
-		var errno = __wasip1_fd_prestat_get(preopenFd, &prestat)
 
+		errno := __wasip1_fd_prestat_get(preopenFd, &prestat)
 		if errno == EBADF {
 			break
 		}
@@ -410,7 +295,8 @@ func now() (sec int64, nsec int32)
 
 //go:nosplit
 func appendCleanPath(buf []byte, path string, lookupParent bool) ([]byte, bool) {
-	for i := 0; i < len(path); {
+	i := 0
+	for i < len(path) {
 		for i < len(path) && path[i] == '/' {
 			i++
 		}
@@ -486,10 +372,10 @@ func joinPath(dir, file string) string {
 	// If the file ended with a '/' we make sure that the output also ends
 	// with a '/'. This is needed to ensure that programs have a mechanism
 	// to represent dereferencing symbolic links pointing to directories.
-	if len(buf) > 0 && buf[len(buf)-1] != '/' && isDir(file) {
+	if buf[len(buf)-1] != '/' && isDir(file) {
 		buf = append(buf, '/')
 	}
-	return *(*string)(unsafe.Pointer(&buf))
+	return unsafe.String(&buf[0], len(buf))
 }
 
 func isAbs(path string) bool {
@@ -508,6 +394,12 @@ func hasSuffix(s, x string) bool {
 	return len(s) >= len(x) && s[len(s)-len(x):] == x
 }
 
+// preparePath returns the preopen file descriptor and name of the directory to
+// perform path resolution from, along with the pair of pointer and length for
+// the relative expression of path from the directory.
+//
+// If the path argument is not absolute, it is first appended to the current
+// working directory before resolution.
 func preparePath(path string) (__wasip1_fd_t, string, *byte, size_t) {
 	var dirFd = ^__wasip1_fd_t(0)
 	var dirName string
@@ -540,6 +432,9 @@ func Open(path string, openmode int, perm uint32) (int, error) {
 	return fd, err
 }
 
+// PathOpen is similar to Open but it also returns the absolute path of the
+// newly open file, which may differ from the path passed as argument if it was
+// relative and therefore resolved from the current working directory.
 func PathOpen(path string, openmode int) (int, string, error) {
 	if path == "" {
 		return -1, "", EINVAL
