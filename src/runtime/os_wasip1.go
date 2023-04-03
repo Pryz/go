@@ -2,14 +2,17 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build wasip1
-
 package runtime
 
-import (
-	"unsafe"
-)
+import "unsafe"
 
+// GOARCH=wasm currently has 64 bits pointers, but the WebAssembly host expects
+// pointers to be 32 bits so we use this type alias to represent pointers in
+// structs and arrays passed as arguments to WASI functions.
+//
+// Note that the use of an integer type prevents the compiler from tracking
+// pointers passed to WASI functions, so we must use KeepAlive to explicitly
+// retain the objects that could otherwise be reclaimed by the GC.
 type uintptr_t = uint32
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-size-u32
@@ -51,63 +54,37 @@ type __wasip1_ciovec_t struct {
 
 //go:wasmimport wasi_snapshot_preview1 args_get
 //go:noescape
-func __wasip1_args_get(
-	argv *uintptr_t,
-	argv_buf *byte,
-) __wasip1_errno_t
+func __wasip1_args_get(argv *uintptr_t, argv_buf *byte) __wasip1_errno_t
 
 //go:wasmimport wasi_snapshot_preview1 args_sizes_get
 //go:noescape
-func __wasip1_args_sizes_get(
-	argc *size_t,
-	argv_buf_size *size_t,
-) __wasip1_errno_t
+func __wasip1_args_sizes_get(argc *size_t, argv_buf_size *size_t) __wasip1_errno_t
 
 //go:wasmimport wasi_snapshot_preview1 clock_time_get
 //go:noescape
-func __wasip1_clock_time_get(
-	clock_id __wasip1_clockid_t,
-	precision __wasip1_timestamp_t,
-	time *__wasip1_timestamp_t,
-) __wasip1_errno_t
+func __wasip1_clock_time_get(clock_id __wasip1_clockid_t, precision __wasip1_timestamp_t, time *__wasip1_timestamp_t) __wasip1_errno_t
 
 //go:wasmimport wasi_snapshot_preview1 environ_get
 //go:noescape
-func __wasip1_environ_get(
-	environ *uintptr_t,
-	environ_buf *byte,
-) __wasip1_errno_t
+func __wasip1_environ_get(environ *uintptr_t, environ_buf *byte) __wasip1_errno_t
 
 //go:wasmimport wasi_snapshot_preview1 environ_sizes_get
 //go:noescape
-func __wasip1_environ_sizes_get(
-	environ_count *size_t,
-	environ_buf_size *size_t,
-) __wasip1_errno_t
+func __wasip1_environ_sizes_get(environ_count *size_t, environ_buf_size *size_t) __wasip1_errno_t
 
 //go:wasmimport wasi_snapshot_preview1 proc_exit
-func __wasip1_proc_exit(
-	code int32,
-)
+func __wasip1_proc_exit(code int32)
 
 //go:wasmimport wasi_snapshot_preview1 fd_write
 //go:noescape
-func __wasip1_fd_write(
-	fd __wasip1_fd_t,
-	iovs *__wasip1_ciovec_t,
-	iovs_len size_t,
-	nwritten *size_t,
-) __wasip1_errno_t
+func __wasip1_fd_write(fd __wasip1_fd_t, iovs *__wasip1_ciovec_t, iovs_len size_t, nwritten *size_t) __wasip1_errno_t
 
 //go:wasmimport wasi_snapshot_preview1 sched_yield
 func __wasip1_sched_yield() __wasip1_errno_t
 
 //go:wasmimport wasi_snapshot_preview1 random_get
 //go:noescape
-func __wasip1_random_get(
-	buf *byte,
-	buf_len size_t,
-) __wasip1_errno_t
+func __wasip1_random_get(buf *byte, buf_len size_t) __wasip1_errno_t
 
 type __wasip1_eventtype_t uint8
 
@@ -167,12 +144,7 @@ func (u *__wasip1_subscription_u) __wasip1_subscription_clock_t() *__wasip1_subs
 
 //go:wasmimport wasi_snapshot_preview1 poll_oneoff
 //go:noescape
-func __wasip1_poll_oneoff(
-	in *__wasip1_subscription_t,
-	out *__wasip1_event_t,
-	nsubscriptions size_t,
-	nevents *size_t,
-) __wasip1_errno_t
+func __wasip1_poll_oneoff(in *__wasip1_subscription_t, out *__wasip1_event_t, nsubscriptions size_t, nevents *size_t) __wasip1_errno_t
 
 func exit(code int32) {
 	__wasip1_proc_exit(code)

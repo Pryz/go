@@ -2,8 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build wasip1
-
 package runtime
 
 // wasm has no support for threads yet. There is no preemption.
