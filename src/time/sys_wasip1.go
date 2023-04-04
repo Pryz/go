@@ -1,8 +1,6 @@
-// Copyright 2011 The Go Authors. All rights reserved.
+// Copyright 2023 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
-
-//go:build unix || (js && wasm)
 
 package time
 
@@ -13,7 +11,11 @@ import (
 
 // for testing: whatever interrupts a sleep
 func interrupt() {
-	syscall.Kill(syscall.Getpid(), syscall.SIGCHLD)
+	// There is no mechanism in wasi to interrupt the call to poll_oneoff
+	// used to implement runtime.usleep so this function does nothing, which
+	// somewhat defeats the purpose of TestSleep but we are still better off
+	// validating that time elapses when the process calls time.Sleep than
+	// skipping the test altogether.
 }
 
 func open(name string) (uintptr, error) {
