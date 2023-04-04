@@ -86,8 +86,8 @@ func notetsleepg(n *note, ns int64) bool {
 		if n.key != 0 {
 			return true
 		}
-		if __wasip1_sched_yield() != 0 {
-			throw("__wasip1_sched_yield failed")
+		if sched_yield() != 0 {
+			throw("sched_yield failed")
 		}
 		Gosched()
 		if ns >= 0 && nanotime() >= deadline {
@@ -101,3 +101,6 @@ func beforeIdle(int64, int64) (*g, bool) {
 }
 
 func checkTimeouts() {}
+
+//go:wasmimport wasi_snapshot_preview1 sched_yield
+func sched_yield() errno

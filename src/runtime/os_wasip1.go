@@ -15,227 +15,209 @@ import "unsafe"
 // Note that the use of an integer type prevents the compiler from tracking
 // pointers passed to WASI functions, so we must use KeepAlive to explicitly
 // retain the objects that could otherwise be reclaimed by the GC.
-type uintptr_t = uint32
+type uintptr32 = uint32
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-size-u32
-type size_t = uint32
+type size = uint32
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-errno-variant
-type __wasip1_errno_t = uint32
+type errno = uint32
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-filesize-u64
-type __wasip1_filesize_t = uint64
+type filesize = uint64
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-timestamp-u64
-type __wasip1_timestamp_t = uint64
-
-// https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd-handle
-type __wasip1_fd_t = uint32
+type timestamp = uint64
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-clockid-variant
-type __wasip1_clockid_t = uint32
+type clockid = uint32
 
 const (
-	__wasip1_clock_realtime           __wasip1_clockid_t = 0
-	__wasip1_clock_monotonic          __wasip1_clockid_t = 1
-	__wasip1_clock_process_cputime_id __wasip1_clockid_t = 2
-	__wasip1_clock_thread_cputime_id  __wasip1_clockid_t = 3
+	clockRealtime  clockid = 0
+	clockMonotonic clockid = 1
 )
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-iovec-record
-type __wasip1_iovec_t struct {
-	buf     uintptr_t
-	buf_len size_t
+type iovec struct {
+	buf    uintptr32
+	bufLen size
 }
 
-// https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-ciovec-record
-type __wasip1_ciovec_t struct {
-	buf     uintptr_t
-	buf_len size_t
-}
+//go:wasmimport wasi_snapshot_preview1 proc_exit
+func exit(code int32)
 
 //go:wasmimport wasi_snapshot_preview1 args_get
 //go:noescape
-func __wasip1_args_get(argv *uintptr_t, argv_buf *byte) __wasip1_errno_t
+func args_get(argv *uintptr32, argvBuf *byte) errno
 
 //go:wasmimport wasi_snapshot_preview1 args_sizes_get
 //go:noescape
-func __wasip1_args_sizes_get(argc *size_t, argv_buf_size *size_t) __wasip1_errno_t
+func args_sizes_get(argc *size, argvBufLen *size) errno
 
 //go:wasmimport wasi_snapshot_preview1 clock_time_get
 //go:noescape
-func __wasip1_clock_time_get(clock_id __wasip1_clockid_t, precision __wasip1_timestamp_t, time *__wasip1_timestamp_t) __wasip1_errno_t
+func clock_time_get(clock_id clockid, precision timestamp, time *timestamp) errno
 
 //go:wasmimport wasi_snapshot_preview1 environ_get
 //go:noescape
-func __wasip1_environ_get(environ *uintptr_t, environ_buf *byte) __wasip1_errno_t
+func environ_get(environ *uintptr32, environBuf *byte) errno
 
 //go:wasmimport wasi_snapshot_preview1 environ_sizes_get
 //go:noescape
-func __wasip1_environ_sizes_get(environ_count *size_t, environ_buf_size *size_t) __wasip1_errno_t
-
-//go:wasmimport wasi_snapshot_preview1 proc_exit
-func __wasip1_proc_exit(code int32)
+func environ_sizes_get(environCount *size, environBufLen *size) errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_write
 //go:noescape
-func __wasip1_fd_write(fd __wasip1_fd_t, iovs *__wasip1_ciovec_t, iovs_len size_t, nwritten *size_t) __wasip1_errno_t
-
-//go:wasmimport wasi_snapshot_preview1 sched_yield
-func __wasip1_sched_yield() __wasip1_errno_t
+func fd_write(fd int32, iovs *iovec, iovsLen size, nwritten *size) errno
 
 //go:wasmimport wasi_snapshot_preview1 random_get
 //go:noescape
-func __wasip1_random_get(buf *byte, buf_len size_t) __wasip1_errno_t
+func random_get(buf *byte, bufLen size) errno
 
-type __wasip1_eventtype_t uint8
-
-const (
-	__wasip1_eventtype_clock __wasip1_eventtype_t = iota
-	__wasip1_eventtype_fd_read
-	__wasip1_eventtype_fd_write
-)
-
-type __wasip1_eventrwflags_t uint16
+type eventtype = uint8
 
 const (
-	__wasip1_fd_readwrite_hangup __wasip1_eventrwflags_t = 1 << iota
+	eventtypeClock eventtype = iota
+	eventtypeFdRead
+	eventtypeFdWrite
 )
 
-type __wasip1_userdata_t uint64
-
-type __wasip1_event_t struct {
-	userdata    __wasip1_userdata_t
-	error       uint16 // TODO: this should be __wasip1_errno_t but the compiler rejects uint16 as argument to imported functions
-	typ         __wasip1_eventtype_t
-	fdReadwrite __wasip1_event_fd_readwrite_t
-}
-
-type __wasip1_event_fd_readwrite_t struct {
-	nbytes __wasip1_filesize_t
-	flags  __wasip1_eventrwflags_t
-}
-
-type __wasip1_subclockflags_t uint16
+type eventrwflags = uint16
 
 const (
-	__wasip1_subscription_clock_abstime __wasip1_subclockflags_t = 1 << iota
+	fdReadwriteHangup eventrwflags = 1 << iota
 )
 
-type __wasip1_subscription_clock_t struct {
-	id        __wasip1_clockid_t
-	timeout   __wasip1_timestamp_t
-	precision __wasip1_timestamp_t
-	flags     __wasip1_subclockflags_t
+type userdata = uint64
+
+type event struct {
+	userdata    userdata
+	error       uint16 // TODO: this should be errno but the compiler rejects uint16 as argument to imported functions
+	typ         eventtype
+	fdReadwrite eventFdReadwrite
 }
 
-type __wasip1_subscription_t struct {
-	userdata __wasip1_userdata_t
-	u        __wasip1_subscription_u
+type eventFdReadwrite struct {
+	nbytes filesize
+	flags  eventrwflags
 }
 
-type __wasip1_subscription_u [5]uint64
+type subclockflags = uint16
 
-func (u *__wasip1_subscription_u) __wasip1_eventtype_t() *__wasip1_eventtype_t {
-	return (*__wasip1_eventtype_t)(unsafe.Pointer(&u[0]))
+const (
+	subscriptionClockAbstime subclockflags = 1 << iota
+)
+
+type subscriptionClock struct {
+	id        clockid
+	timeout   timestamp
+	precision timestamp
+	flags     subclockflags
 }
 
-func (u *__wasip1_subscription_u) __wasip1_subscription_clock_t() *__wasip1_subscription_clock_t {
-	return (*__wasip1_subscription_clock_t)(unsafe.Pointer(&u[1]))
+type subscription struct {
+	userdata userdata
+	u        subscriptionUnion
+}
+
+type subscriptionUnion [5]uint64
+
+func (u *subscriptionUnion) eventtype() *eventtype {
+	return (*eventtype)(unsafe.Pointer(&u[0]))
+}
+
+func (u *subscriptionUnion) subscriptionClock() *subscriptionClock {
+	return (*subscriptionClock)(unsafe.Pointer(&u[1]))
 }
 
 //go:wasmimport wasi_snapshot_preview1 poll_oneoff
 //go:noescape
-func __wasip1_poll_oneoff(in *__wasip1_subscription_t, out *__wasip1_event_t, nsubscriptions size_t, nevents *size_t) __wasip1_errno_t
-
-func exit(code int32) {
-	__wasip1_proc_exit(code)
-}
+func poll_oneoff(in *subscription, out *event, nsubscriptions size, nevents *size) errno
 
 func write1(fd uintptr, p unsafe.Pointer, n int32) int32 {
-	iov := __wasip1_ciovec_t{
-		buf:     uintptr_t(uintptr(p)),
-		buf_len: size_t(n),
+	iov := iovec{
+		buf:    uintptr32(uintptr(p)),
+		bufLen: size(n),
 	}
-	var nwritten size_t
-	if __wasip1_fd_write(__wasip1_fd_t(fd), &iov, 1, &nwritten) != 0 {
-		throw("__wasip1_fd_write failed")
+	var nwritten size
+	if fd_write(int32(fd), &iov, 1, &nwritten) != 0 {
+		throw("fd_write failed")
 	}
 	return int32(nwritten)
 }
 
 func usleep(usec uint32) {
-	var in __wasip1_subscription_t
-	var out __wasip1_event_t
-	var nevents size_t
+	var in subscription
+	var out event
+	var nevents size
 
-	eventtype := in.u.__wasip1_eventtype_t()
-	*eventtype = __wasip1_eventtype_clock
+	eventtype := in.u.eventtype()
+	*eventtype = eventtypeClock
 
-	subscription := in.u.__wasip1_subscription_clock_t()
-	subscription.id = __wasip1_clock_monotonic
-	subscription.timeout = __wasip1_timestamp_t(usec) * 1e3
+	subscription := in.u.subscriptionClock()
+	subscription.id = clockMonotonic
+	subscription.timeout = timestamp(usec) * 1e3
 	subscription.precision = 1e3
 
-	if __wasip1_poll_oneoff(&in, &out, 1, &nevents) != 0 {
+	if poll_oneoff(&in, &out, 1, &nevents) != 0 {
 		throw("wasi_snapshot_preview1.poll_oneoff")
 	}
 }
 
 func getRandomData(r []byte) {
-	if __wasip1_random_get(&r[0], size_t(len(r))) != 0 {
-		throw("__wasip1_random_get failed")
+	if random_get(&r[0], size(len(r))) != 0 {
+		throw("random_get failed")
 	}
 }
 
 func goenvs() {
 	// arguments
-	var argc size_t
-	var argv_buf_size size_t
-	if __wasip1_args_sizes_get(&argc, &argv_buf_size) != 0 {
-		throw("__wasip1_args_sizes_get failed")
+	var argc size
+	var argvBufLen size
+	if args_sizes_get(&argc, &argvBufLen) != 0 {
+		throw("args_sizes_get failed")
 	}
 
 	argslice = make([]string, argc)
 	if argc > 0 {
-		argv := make([]uintptr_t, argc)
-		argv_buf := make([]byte, argv_buf_size)
-		if __wasip1_args_get(&argv[0], &argv_buf[0]) != 0 {
-			throw("__wasip1_args_get failed")
+		argv := make([]uintptr32, argc)
+		argvBuf := make([]byte, argvBufLen)
+		if args_get(&argv[0], &argvBuf[0]) != 0 {
+			throw("args_get failed")
 		}
 
 		for i := range argslice {
-			start := argv[i] - uintptr_t(uintptr(unsafe.Pointer(&argv_buf[0])))
+			start := argv[i] - uintptr32(uintptr(unsafe.Pointer(&argvBuf[0])))
 			end := start
-			for argv_buf[end] != 0 {
+			for argvBuf[end] != 0 {
 				end++
 			}
-			argslice[i] = string(argv_buf[start:end])
+			argslice[i] = string(argvBuf[start:end])
 		}
 	}
 
 	// environment
-	var environ_count size_t
-	var environ_buf_size size_t
-	if __wasip1_environ_sizes_get(&environ_count, &environ_buf_size) != 0 {
-		throw("__wasip1_environ_sizes_get failed")
+	var environCount size
+	var environBufLen size
+	if environ_sizes_get(&environCount, &environBufLen) != 0 {
+		throw("environ_sizes_get failed")
 	}
 
-	envs = make([]string, environ_count)
-	if environ_count > 0 {
-		environ := make([]uintptr_t, environ_count)
-		environ_buf := make([]byte, environ_buf_size)
-		if __wasip1_environ_get(&environ[0], &environ_buf[0]) != 0 {
-			throw("__wasip1_environ_get failed")
+	envs = make([]string, environCount)
+	if environCount > 0 {
+		environ := make([]uintptr32, environCount)
+		environBuf := make([]byte, environBufLen)
+		if environ_get(&environ[0], &environBuf[0]) != 0 {
+			throw("environ_get failed")
 		}
 
 		for i := range envs {
-			start := environ[i] - uintptr_t(uintptr(unsafe.Pointer(&environ_buf[0])))
+			start := environ[i] - uintptr32(uintptr(unsafe.Pointer(&environBuf[0])))
 			end := start
-			for environ_buf[end] != 0 {
+			for environBuf[end] != 0 {
 				end++
 			}
-			envs[i] = string(environ_buf[start:end])
+			envs[i] = string(environBuf[start:end])
 		}
 	}
 }
@@ -245,17 +227,17 @@ func walltime() (sec int64, nsec int32) {
 }
 
 func walltime1() (sec int64, nsec int32) {
-	var time __wasip1_timestamp_t
-	if __wasip1_clock_time_get(__wasip1_clock_realtime, 0, &time) != 0 {
-		throw("__wasip1_clock_time_get failed")
+	var time timestamp
+	if clock_time_get(clockRealtime, 0, &time) != 0 {
+		throw("clock_time_get failed")
 	}
 	return int64(time / 1000000000), int32(time % 1000000000)
 }
 
 func nanotime1() int64 {
-	var time __wasip1_timestamp_t
-	if __wasip1_clock_time_get(__wasip1_clock_monotonic, 0, &time) != 0 {
-		throw("__wasip1_clock_time_get failed")
+	var time timestamp
+	if clock_time_get(clockMonotonic, 0, &time) != 0 {
+		throw("clock_time_get failed")
 	}
 	return int64(time)
 }
