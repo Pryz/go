@@ -378,7 +378,7 @@ func Getppid() int {
 
 func Gettimeofday(tv *Timeval) error {
 	var time timestamp
-	if errno := clockTimeGet(clockRealtime, 1e3, &time); errno != 0 {
+	if errno := clock_time_get(clockRealtime, 1e3, &time); errno != 0 {
 		return errno
 	}
 	tv.setTimestamp(time)
@@ -441,3 +441,16 @@ func setTimespec(sec, nsec int64) Timespec {
 func setTimeval(sec, usec int64) Timeval {
 	return Timeval{Sec: sec, Usec: usec}
 }
+
+type clockid = uint32
+
+const (
+	clockRealtime clockid = iota
+	clockMonotonic
+	clockProcessCPUTimeID
+	clockThreadCPUTimeID
+)
+
+//go:wasmimport wasi_snapshot_preview1 clock_time_get
+//go:noescape
+func clock_time_get(id clockid, precision timestamp, time *timestamp) Errno

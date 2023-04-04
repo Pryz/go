@@ -11,31 +11,22 @@ import (
 	"unsafe"
 )
 
-type uintptr_t = uint32
-type size_t = uint32
-type __wasip1_fd_t = uint32
-type __wasip1_fdflags_t = uint32
-type __wasip1_filesize_t = uint64
-type __wasip1_filetype_t = uint8
-type __wasip1_lookupflags_t = uint32
-type __wasip1_oflags_t = uint32
-type __wasip1_rights_t = uint64
-type __wasip1_timestamp_t = uint64
-type __wasip1_dircookie_t = uint64
-type __wasip1_filedelta_t = int64
-type __wasip1_whence_t = uint32
-type __wasip1_fstflags_t = uint32
+type uintptr32 = uint32
+type size = uint32
+type fdflags = uint32
+type filesize = uint64
+type filetype = uint8
+type lookupflags = uint32
+type oflags = uint32
+type rights = uint64
+type timestamp = uint64
+type dircookie = uint64
+type filedelta = int64
+type fstflags = uint32
 
-type __wasip1_iovec_t struct {
-	buf     uintptr_t
-	buf_len size_t
-}
-
-type __wasip1_fdstat_t struct {
-	Filetype         __wasip1_filetype_t
-	Flags            __wasip1_fdflags_t
-	RightsBase       __wasip1_rights_t
-	RightsInheriting __wasip1_rights_t
+type iovec struct {
+	buf    uintptr32
+	bufLen size
 }
 
 const (
@@ -106,136 +97,132 @@ const (
 const (
 	// Despite the rights being defined as a 64 bits integer in the spec,
 	// wasmtime crashes the program if we set any of the upper 32 bits.
-	fullRights  = __wasip1_rights_t(^uint32(0))
-	readRights  = __wasip1_rights_t(RIGHT_FD_READ | RIGHT_FD_READDIR)
-	writeRights = __wasip1_rights_t(RIGHT_FD_DATASYNC | RIGHT_FD_WRITE | RIGHT_FD_ALLOCATE | RIGHT_PATH_FILESTAT_SET_SIZE)
+	fullRights  = rights(^uint32(0))
+	readRights  = rights(RIGHT_FD_READ | RIGHT_FD_READDIR)
+	writeRights = rights(RIGHT_FD_DATASYNC | RIGHT_FD_WRITE | RIGHT_FD_ALLOCATE | RIGHT_PATH_FILESTAT_SET_SIZE)
 )
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd_closefd-fd---result-errno
 //
 //go:wasmimport wasi_snapshot_preview1 fd_close
 //go:noescape
-func __wasip1_fd_close(fd __wasip1_fd_t) Errno
+func fd_close(fd int32) Errno
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd_filestat_set_sizefd-fd-size-filesize---result-errno
 //
 //go:wasmimport wasi_snapshot_preview1 fd_filestat_set_size
 //go:noescape
-func __wasip1_fd_filestat_set_size(fd __wasip1_fd_t, st_size __wasip1_filesize_t) Errno
+func fd_filestat_set_size(fd int32, st_size filesize) Errno
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd_preadfd-fd-iovs-iovec_array-offset-filesize---resultsize-errno
 //
 //go:wasmimport wasi_snapshot_preview1 fd_pread
 //go:noescape
-func __wasip1_fd_pread(fd __wasip1_fd_t, iovs *__wasip1_iovec_t, iovs_len size_t, offset __wasip1_filesize_t, nread *size_t) Errno
+func fd_pread(fd int32, iovs *iovec, iovsLen size, offset filesize, nread *size) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_pwrite
 //go:noescape
-func __wasip1_fd_pwrite(fd __wasip1_fd_t, iovs *__wasip1_iovec_t, iovs_len size_t, offset __wasip1_filesize_t, nwritten *size_t) Errno
+func fd_pwrite(fd int32, iovs *iovec, iovsLen size, offset filesize, nwritten *size) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_read
 //go:noescape
-func __wasip1_fd_read(fd __wasip1_fd_t, iovs *__wasip1_iovec_t, iovs_len size_t, nread *size_t) Errno
+func fd_read(fd int32, iovs *iovec, iovsLen size, nread *size) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_readdir
 //go:noescape
-func __wasip1_fd_readdir(fd __wasip1_fd_t, buf *byte, buf_len size_t, cookie __wasip1_dircookie_t, bufused *size_t) Errno
+func fd_readdir(fd int32, buf *byte, bufLen size, cookie dircookie, nwritten *size) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_seek
 //go:noescape
-func __wasip1_fd_seek(fd __wasip1_fd_t, offset __wasip1_filedelta_t, whence __wasip1_whence_t, newoffset *__wasip1_filesize_t) Errno
-
-//go:wasmimport wasi_snapshot_preview1 fd_fdstat_get
-//go:noescape
-func __wasip1_fd_fdstat_get(fd __wasip1_fd_t, buf *__wasip1_fdstat_t) Errno
+func fd_seek(fd int32, offset filedelta, whence uint32, newoffset *filesize) Errno
 
 // https://github.com/WebAssembly/WASI/blob/a2b96e81c0586125cc4dc79a5be0b78d9a059925/legacy/preview1/docs.md#-fd_fdstat_set_rightsfd-fd-fs_rights_base-rights-fs_rights_inheriting-rights---result-errno
 //
 //go:wasmimport wasi_snapshot_preview1 fd_fdstat_set_rights
 //go:noescape
-func __wasip1_fd_fdstat_set_rights(fd __wasip1_fd_t, rightsBase __wasip1_rights_t, rightsInheriting __wasip1_rights_t) Errno
+func fd_fdstat_set_rights(fd int32, rightsBase rights, rightsInheriting rights) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_filestat_get
 //go:noescape
-func __wasip1_fd_filestat_get(fd __wasip1_fd_t, buf *Stat_t) Errno
+func fd_filestat_get(fd int32, buf *Stat_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_write
 //go:noescape
-func __wasip1_fd_write(fd __wasip1_fd_t, iovs *__wasip1_iovec_t, iovs_len size_t, nwritten *size_t) Errno
+func fd_write(fd int32, iovs *iovec, iovsLen size, nwritten *size) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_sync
 //go:noescape
-func __wasip1_fd_sync(fd __wasip1_fd_t) Errno
+func fd_sync(fd int32) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_create_directory
 //go:noescape
-func __wasip1_path_create_directory(fd __wasip1_fd_t, path *byte, path_len size_t) Errno
+func path_create_directory(fd int32, path *byte, pathLen size) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_filestat_get
 //go:noescape
-func __wasip1_path_filestat_get(fd __wasip1_fd_t, flags __wasip1_lookupflags_t, path *byte, path_len size_t, buf *Stat_t) Errno
+func path_filestat_get(fd int32, flags lookupflags, path *byte, pathLen size, buf *Stat_t) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_filestat_set_times
 //go:noescape
-func __wasip1_path_filestat_set_times(fd __wasip1_fd_t, flags __wasip1_lookupflags_t, path *byte, path_len size_t, st_atim __wasip1_timestamp_t, st_mtim __wasip1_timestamp_t, fstflags __wasip1_fstflags_t) Errno
+func path_filestat_set_times(fd int32, flags lookupflags, path *byte, pathLen size, atim timestamp, mtim timestamp, fstflags fstflags) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_link
 //go:noescape
-func __wasip1_path_link(old_fd __wasip1_fd_t, old_flags __wasip1_lookupflags_t, old_path *byte, old_path_len size_t, new_fd __wasip1_fd_t, new_path *byte, new_path_len size_t) Errno
+func path_link(oldFd int32, oldFlags lookupflags, oldPath *byte, oldPathLen size, newFd int32, newPath *byte, newPathLen size) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_readlink
 //go:noescape
-func __wasip1_path_readlink(fd __wasip1_fd_t, path *byte, path_len size_t, buf *byte, buf_len size_t, bufused *size_t) Errno
+func path_readlink(fd int32, path *byte, pathLen size, buf *byte, bufLen size, nwritten *size) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_remove_directory
 //go:noescape
-func __wasip1_path_remove_directory(fd __wasip1_fd_t, path *byte, path_len size_t) Errno
+func path_remove_directory(fd int32, path *byte, pathLen size) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_rename
 //go:noescape
-func __wasip1_path_rename(old_fd __wasip1_fd_t, old_path *byte, old_path_len size_t, new_fd __wasip1_fd_t, new_path *byte, new_path_len size_t) Errno
+func path_rename(oldFd int32, oldPath *byte, oldPathLen size, newFd int32, newPath *byte, newPathLen size) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_symlink
 //go:noescape
-func __wasip1_path_symlink(old_path *byte, old_path_len size_t, fd __wasip1_fd_t, new_path *byte, new_path_len size_t) Errno
+func path_symlink(oldPath *byte, oldPathLen size, fd int32, newPath *byte, newPathLen size) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_unlink_file
 //go:noescape
-func __wasip1_path_unlink_file(fd __wasip1_fd_t, path *byte, path_len size_t) Errno
+func path_unlink_file(fd int32, path *byte, pathLen size) Errno
 
 //go:wasmimport wasi_snapshot_preview1 path_open
 //go:noescape
-func __wasip1_path_open(rootFD __wasip1_fd_t, dirflags __wasip1_lookupflags_t, path *byte, path_len size_t, oflags __wasip1_oflags_t, fs_rights_base __wasip1_rights_t, fs_rights_inheriting __wasip1_rights_t, fs_flags __wasip1_fdflags_t, fd *__wasip1_fd_t) Errno
+func path_open(rootFD int32, dirflags lookupflags, path *byte, pathLen size, oflags oflags, fsRightsBase rights, fsRightsInheriting rights, fsFlags fdflags, fd *int32) Errno
 
 //go:wasmimport wasi_snapshot_preview1 random_get
 //go:noescape
-func __wasip1_random_get(buf *byte, buf_len size_t) Errno
+func random_get(buf *byte, bufLen size) Errno
 
-type __wasip1_preopentype uint8
+type preopentype = uint8
 
 const (
-	__wasip1_preopentype_dir __wasip1_preopentype = iota
+	preopentype_dir preopentype = iota
 )
 
-type __wasip1_prestat_dir struct {
-	pr_name_len size_t
+type prestat_dir struct {
+	pr_name_len size
 }
 
-type __wasip1_prestat struct {
-	typ __wasip1_preopentype
-	dir __wasip1_prestat_dir
+type prestat struct {
+	typ preopentype
+	dir prestat_dir
 }
 
 //go:wasmimport wasi_snapshot_preview1 fd_prestat_get
 //go:noescape
-func __wasip1_fd_prestat_get(fd __wasip1_fd_t, prestat *__wasip1_prestat) Errno
+func fd_prestat_get(fd int32, prestat *prestat) Errno
 
 //go:wasmimport wasi_snapshot_preview1 fd_prestat_dir_name
 //go:noescape
-func __wasip1_fd_prestat_dir_name(fd __wasip1_fd_t, path *byte, path_len size_t) Errno
+func fd_prestat_dir_name(fd int32, path *byte, pathLen size) Errno
 
 type opendir struct {
-	fd   __wasip1_fd_t
+	fd   int32
 	name string
 }
 
@@ -256,24 +243,24 @@ func init() {
 	dirNameBuf := make([]byte, 256)
 	// We start looking for preopens at fd=3 because 0, 1, and 2 are reserved
 	// for standard input and outputs.
-	for preopenFd := __wasip1_fd_t(3); ; preopenFd++ {
-		var prestat __wasip1_prestat
+	for preopenFd := int32(3); ; preopenFd++ {
+		var prestat prestat
 
-		errno := __wasip1_fd_prestat_get(preopenFd, &prestat)
+		errno := fd_prestat_get(preopenFd, &prestat)
 		if errno == EBADF {
 			break
 		}
 		if errno != 0 {
 			panic("fd_prestat: " + errno.Error())
 		}
-		if prestat.typ != __wasip1_preopentype_dir {
+		if prestat.typ != preopentype_dir {
 			continue
 		}
 		if int(prestat.dir.pr_name_len) > len(dirNameBuf) {
 			dirNameBuf = make([]byte, prestat.dir.pr_name_len)
 		}
 
-		errno = __wasip1_fd_prestat_dir_name(preopenFd, &dirNameBuf[0], prestat.dir.pr_name_len)
+		errno = fd_prestat_dir_name(preopenFd, &dirNameBuf[0], prestat.dir.pr_name_len)
 		if errno != 0 {
 			panic("fd_prestat_dir_name: " + errno.Error())
 			continue
@@ -402,8 +389,8 @@ func hasSuffix(s, x string) bool {
 //
 // If the path argument is not absolute, it is first appended to the current
 // working directory before resolution.
-func preparePath(path string) (__wasip1_fd_t, string, *byte, size_t) {
-	var dirFd = ^__wasip1_fd_t(0)
+func preparePath(path string) (int32, string, *byte, size) {
+	var dirFd = int32(-1)
 	var dirName string
 
 	dir := "/"
@@ -426,7 +413,7 @@ func preparePath(path string) (__wasip1_fd_t, string, *byte, size_t) {
 		path = "."
 	}
 
-	return dirFd, dirName, unsafe.StringData(path), size_t(len(path))
+	return dirFd, dirName, unsafe.StringData(path), size(len(path))
 }
 
 func Open(path string, openmode int, perm uint32) (int, error) {
@@ -443,7 +430,7 @@ func PathOpen(path string, openmode int) (int, string, error) {
 	}
 	dirFd, dirName, pathPtr, pathLen := preparePath(path)
 
-	var oflags __wasip1_oflags_t
+	var oflags oflags
 	if (openmode & O_CREATE) != 0 {
 		oflags |= OFLAG_CREATE
 	}
@@ -456,7 +443,7 @@ func PathOpen(path string, openmode int) (int, string, error) {
 
 	// Remove when https://github.com/bytecodealliance/wasmtime/pull/4967 is merged.
 	var st Stat_t
-	if errno := __wasip1_path_filestat_get(
+	if errno := path_filestat_get(
 		dirFd,
 		LOOKUP_SYMLINK_FOLLOW,
 		pathPtr,
@@ -477,7 +464,7 @@ func PathOpen(path string, openmode int) (int, string, error) {
 		}
 	}
 
-	var rights __wasip1_rights_t
+	var rights rights
 	switch openmode & (O_RDONLY | O_WRONLY | O_RDWR) {
 	case O_RDONLY:
 		rights = fullRights & ^writeRights
@@ -487,7 +474,7 @@ func PathOpen(path string, openmode int) (int, string, error) {
 		rights = fullRights
 	}
 
-	var fdflags __wasip1_fdflags_t
+	var fdflags fdflags
 	if (openmode & O_APPEND) != 0 {
 		fdflags |= FDFLAG_APPEND
 	}
@@ -495,8 +482,8 @@ func PathOpen(path string, openmode int) (int, string, error) {
 		fdflags |= FDFLAG_SYNC
 	}
 
-	var fd __wasip1_fd_t
-	errno := __wasip1_path_open(
+	var fd int32
+	errno := path_open(
 		dirFd,
 		LOOKUP_SYMLINK_FOLLOW,
 		pathPtr,
@@ -515,7 +502,7 @@ func PathOpen(path string, openmode int) (int, string, error) {
 }
 
 func Close(fd int) error {
-	errno := __wasip1_fd_close(__wasip1_fd_t(fd))
+	errno := fd_close(int32(fd))
 	return errnoErr(errno)
 }
 
@@ -528,14 +515,14 @@ func Mkdir(path string, perm uint32) error {
 		return EINVAL
 	}
 	dirFd, _, pathPtr, pathLen := preparePath(path)
-	errno := __wasip1_path_create_directory(dirFd, pathPtr, pathLen)
+	errno := path_create_directory(dirFd, pathPtr, pathLen)
 	return errnoErr(errno)
 }
 
-func ReadDir(fd int, buf []byte, cookie __wasip1_dircookie_t) (int, error) {
-	var bufused size_t
-	errno := __wasip1_fd_readdir(__wasip1_fd_t(fd), &buf[0], size_t(len(buf)), cookie, &bufused)
-	return int(bufused), errnoErr(errno)
+func ReadDir(fd int, buf []byte, cookie dircookie) (int, error) {
+	var nwritten size
+	errno := fd_readdir(int32(fd), &buf[0], size(len(buf)), cookie, &nwritten)
+	return int(nwritten), errnoErr(errno)
 }
 
 type Stat_t struct {
@@ -560,7 +547,7 @@ func Stat(path string, st *Stat_t) error {
 		return EINVAL
 	}
 	dirFd, _, pathPtr, pathLen := preparePath(path)
-	errno := __wasip1_path_filestat_get(dirFd, LOOKUP_SYMLINK_FOLLOW, pathPtr, pathLen, st)
+	errno := path_filestat_get(dirFd, LOOKUP_SYMLINK_FOLLOW, pathPtr, pathLen, st)
 	setDefaultMode(st)
 	return errnoErr(errno)
 }
@@ -570,13 +557,13 @@ func Lstat(path string, st *Stat_t) error {
 		return EINVAL
 	}
 	dirFd, _, pathPtr, pathLen := preparePath(path)
-	errno := __wasip1_path_filestat_get(dirFd, 0, pathPtr, pathLen, st)
+	errno := path_filestat_get(dirFd, 0, pathPtr, pathLen, st)
 	setDefaultMode(st)
 	return errnoErr(errno)
 }
 
 func Fstat(fd int, st *Stat_t) error {
-	errno := __wasip1_fd_filestat_get(__wasip1_fd_t(fd), st)
+	errno := fd_filestat_get(int32(fd), st)
 	setDefaultMode(st)
 	return errnoErr(errno)
 }
@@ -597,7 +584,7 @@ func Unlink(path string) error {
 		return EINVAL
 	}
 	dirFd, _, pathPtr, pathLen := preparePath(path)
-	errno := __wasip1_path_unlink_file(dirFd, pathPtr, pathLen)
+	errno := path_unlink_file(dirFd, pathPtr, pathLen)
 	return errnoErr(errno)
 }
 
@@ -606,7 +593,7 @@ func Rmdir(path string) error {
 		return EINVAL
 	}
 	dirFd, _, pathPtr, pathLen := preparePath(path)
-	errno := __wasip1_path_remove_directory(dirFd, pathPtr, pathLen)
+	errno := path_remove_directory(dirFd, pathPtr, pathLen)
 	return errnoErr(errno)
 }
 
@@ -637,13 +624,13 @@ func UtimesNano(path string, ts []Timespec) error {
 		return EINVAL
 	}
 	dirFd, _, pathPtr, pathLen := preparePath(path)
-	errno := __wasip1_path_filestat_set_times(
+	errno := path_filestat_set_times(
 		dirFd,
 		LOOKUP_SYMLINK_FOLLOW,
 		pathPtr,
 		pathLen,
-		__wasip1_timestamp_t(TimespecToNsec(ts[0])),
-		__wasip1_timestamp_t(TimespecToNsec(ts[1])),
+		timestamp(TimespecToNsec(ts[0])),
+		timestamp(TimespecToNsec(ts[1])),
 		FILESTAT_SET_ATIM|FILESTAT_SET_MTIM,
 	)
 	return errnoErr(errno)
@@ -655,7 +642,7 @@ func Rename(from, to string) error {
 	}
 	oldDirFd, _, oldPathPtr, oldPathLen := preparePath(from)
 	newDirFd, _, newPathPtr, newPathLen := preparePath(to)
-	errno := __wasip1_path_rename(
+	errno := path_rename(
 		oldDirFd,
 		oldPathPtr,
 		oldPathLen,
@@ -679,7 +666,7 @@ func Truncate(path string, length int64) error {
 }
 
 func Ftruncate(fd int, length int64) error {
-	errno := __wasip1_fd_filestat_set_size(__wasip1_fd_t(fd), __wasip1_filesize_t(length))
+	errno := fd_filestat_set_size(int32(fd), filesize(length))
 	return errnoErr(errno)
 }
 
@@ -702,7 +689,7 @@ func Chdir(path string) error {
 
 	var stat Stat_t
 	dirFd, _, pathPtr, pathLen := preparePath(path)
-	errno := __wasip1_path_filestat_get(dirFd, LOOKUP_SYMLINK_FOLLOW, pathPtr, pathLen, &stat)
+	errno := path_filestat_get(dirFd, LOOKUP_SYMLINK_FOLLOW, pathPtr, pathLen, &stat)
 	if errno != 0 {
 		return errnoErr(errno)
 	}
@@ -721,21 +708,21 @@ func Readlink(path string, buf []byte) (n int, err error) {
 		return 0, nil
 	}
 	dirFd, _, pathPtr, pathLen := preparePath(path)
-	var bufused size_t
-	errno := __wasip1_path_readlink(
+	var nwritten size
+	errno := path_readlink(
 		dirFd,
 		pathPtr,
 		pathLen,
 		&buf[0],
-		size_t(len(buf)),
-		&bufused,
+		size(len(buf)),
+		&nwritten,
 	)
 	// For some reason wasmtime returns ERANGE when the output buffer is
 	// shorter than the symbolic link value. os.Readlink expects a nil
 	// error and uses the fact that n is greater or equal to the buffer
 	// length to assume that it needs to try again with a larger size.
 	// This condition is handled in os.Readlink.
-	return int(bufused), errnoErr(errno)
+	return int(nwritten), errnoErr(errno)
 }
 
 func Link(path, link string) error {
@@ -744,7 +731,7 @@ func Link(path, link string) error {
 	}
 	oldDirFd, _, oldPathPtr, oldPathLen := preparePath(path)
 	newDirFd, _, newPathPtr, newPathLen := preparePath(link)
-	errno := __wasip1_path_link(
+	errno := path_link(
 		oldDirFd,
 		0,
 		oldPathPtr,
@@ -761,9 +748,9 @@ func Symlink(path, link string) error {
 		return EINVAL
 	}
 	dirFd, _, pathPtr, pathlen := preparePath(link)
-	errno := __wasip1_path_symlink(
+	errno := path_symlink(
 		unsafe.StringData(path),
-		size_t(len(path)),
+		size(len(path)),
 		dirFd,
 		pathPtr,
 		pathlen,
@@ -772,48 +759,48 @@ func Symlink(path, link string) error {
 }
 
 func Fsync(fd int) error {
-	errno := __wasip1_fd_sync(__wasip1_fd_t(fd))
+	errno := fd_sync(int32(fd))
 	return errnoErr(errno)
 }
 
-func makeIOVec(b []byte) *__wasip1_iovec_t {
-	return &__wasip1_iovec_t{
-		buf:     uintptr_t(uintptr(unsafe.Pointer(unsafe.SliceData(b)))),
-		buf_len: size_t(len(b)),
+func makeIOVec(b []byte) *iovec {
+	return &iovec{
+		buf:    uintptr32(uintptr(unsafe.Pointer(unsafe.SliceData(b)))),
+		bufLen: size(len(b)),
 	}
 }
 
 func Read(fd int, b []byte) (int, error) {
-	var nread size_t
-	errno := __wasip1_fd_read(__wasip1_fd_t(fd), makeIOVec(b), 1, &nread)
+	var nread size
+	errno := fd_read(int32(fd), makeIOVec(b), 1, &nread)
 	runtime.KeepAlive(b)
 	return int(nread), errnoErr(errno)
 }
 
 func Write(fd int, b []byte) (int, error) {
-	var nwritten size_t
-	errno := __wasip1_fd_write(__wasip1_fd_t(fd), makeIOVec(b), 1, &nwritten)
+	var nwritten size
+	errno := fd_write(int32(fd), makeIOVec(b), 1, &nwritten)
 	runtime.KeepAlive(b)
 	return int(nwritten), errnoErr(errno)
 }
 
 func Pread(fd int, b []byte, offset int64) (int, error) {
-	var nread size_t
-	errno := __wasip1_fd_pread(__wasip1_fd_t(fd), makeIOVec(b), 1, __wasip1_filesize_t(offset), &nread)
+	var nread size
+	errno := fd_pread(int32(fd), makeIOVec(b), 1, filesize(offset), &nread)
 	runtime.KeepAlive(b)
 	return int(nread), errnoErr(errno)
 }
 
 func Pwrite(fd int, b []byte, offset int64) (int, error) {
-	var nwritten size_t
-	errno := __wasip1_fd_pwrite(__wasip1_fd_t(fd), makeIOVec(b), 1, __wasip1_filesize_t(offset), &nwritten)
+	var nwritten size
+	errno := fd_pwrite(int32(fd), makeIOVec(b), 1, filesize(offset), &nwritten)
 	runtime.KeepAlive(b)
 	return int(nwritten), errnoErr(errno)
 }
 
 func Seek(fd int, offset int64, whence int) (int64, error) {
-	var newoffset __wasip1_filesize_t
-	errno := __wasip1_fd_seek(__wasip1_fd_t(fd), __wasip1_filedelta_t(offset), __wasip1_whence_t(whence), &newoffset)
+	var newoffset filesize
+	errno := fd_seek(int32(fd), filedelta(offset), uint32(whence), &newoffset)
 	return int64(newoffset), errnoErr(errno)
 }
 
@@ -830,6 +817,6 @@ func Pipe(fd []int) error {
 }
 
 func RandomGet(b []byte) error {
-	errno := __wasip1_random_get(unsafe.SliceData(b), size_t(len(b)))
+	errno := random_get(unsafe.SliceData(b), size(len(b)))
 	return errnoErr(errno)
 }
