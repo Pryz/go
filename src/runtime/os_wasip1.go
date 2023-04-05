@@ -90,9 +90,17 @@ const (
 
 type userdata = uint64
 
+// The go:wasmimport directive currently does not accept values of type uint16
+// in arguments or returns of the function signature. Most WASI imports return
+// a errno value, which we have to define as uint32 because of that limitation.
+// However, the WASI errno type is intended to be a 16 bits integer, and in the
+// event struct the error field should be of type errno. If we used the errno
+// type for the error field it would result in a mismatching field alignment and
+// struct size because errno is declared as a 32 bits type, so we declare the
+// error field as a plain uint16.
 type event struct {
 	userdata    userdata
-	error       uint16 // TODO: this should be errno but the compiler rejects uint16 as argument to imported functions
+	error       uint16
 	typ         eventtype
 	fdReadwrite eventFdReadwrite
 }
