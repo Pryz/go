@@ -383,13 +383,13 @@ func hasSuffix(s, x string) bool {
 	return len(s) >= len(x) && s[len(s)-len(x):] == x
 }
 
-// preparePath returns the preopen file descriptor and name of the directory to
-// perform path resolution from, along with the pair of pointer and length for
-// the relative expression of path from the directory.
+// preparePath returns the preopen file descriptor of the directory to perform
+// path resolution from, along with the pair of pointer and length for the
+// relative expression of path from the directory.
 //
 // If the path argument is not absolute, it is first appended to the current
 // working directory before resolution.
-func preparePath(path string) (int32, string, *byte, size) {
+func preparePath(path string) (int32, *byte, size) {
 	var dirFd = int32(-1)
 	var dirName string
 
@@ -413,22 +413,14 @@ func preparePath(path string) (int32, string, *byte, size) {
 		path = "."
 	}
 
-	return dirFd, dirName, unsafe.StringData(path), size(len(path))
+	return dirFd, unsafe.StringData(path), size(len(path))
 }
 
 func Open(path string, openmode int, perm uint32) (int, error) {
-	fd, _, err := PathOpen(path, openmode)
-	return fd, err
-}
-
-// PathOpen is similar to Open but it also returns the absolute path of the
-// newly open file, which may differ from the path passed as argument if it was
-// relative and therefore resolved from the current working directory.
-func PathOpen(path string, openmode int) (int, string, error) {
 	if path == "" {
-		return -1, "", EINVAL
+		return -1, EINVAL
 	}
-	dirFd, dirName, pathPtr, pathLen := preparePath(path)
+	dirFd, pathPtr, pathLen := preparePath(path)
 
 	var oflags oflags
 	if (openmode & O_CREATE) != 0 {
@@ -450,7 +442,7 @@ func PathOpen(path string, openmode int) (int, string, error) {
 		pathLen,
 		&fi,
 	); errno != 0 && errno != ENOENT {
-		return -1, "", errnoErr(errno)
+		return -1, errnoErr(errno)
 	}
 	if fi.Filetype == FILETYPE_DIRECTORY {
 		oflags |= OFLAG_DIRECTORY
@@ -460,7 +452,7 @@ func PathOpen(path string, openmode int) (int, string, error) {
 		// here to emulate the expected behavior.
 		const invalidFlags = O_WRONLY | O_RDWR | O_CREATE | O_APPEND | O_TRUNC | O_EXCL
 		if (openmode & invalidFlags) != 0 {
-			return 0, "", EISDIR
+			return 0, EISDIR
 		}
 	}
 
@@ -494,11 +486,7 @@ func PathOpen(path string, openmode int) (int, string, error) {
 		fdflags,
 		&fd,
 	)
-	if errno != 0 {
-		return -1, "", errnoErr(errno)
-	}
-	path = joinPath(dirName, unsafe.String(pathPtr, pathLen))
-	return int(fd), path, errnoErr(errno)
+	return int(fd), errnoErr(errno)
 }
 
 func Close(fd int) error {
@@ -514,7 +502,7 @@ func Mkdir(path string, perm uint32) error {
 	if path == "" {
 		return EINVAL
 	}
-	dirFd, _, pathPtr, pathLen := preparePath(path)
+	dirFd, pathPtr, pathLen := preparePath(path)
 	errno := path_create_directory(dirFd, pathPtr, pathLen)
 	return errnoErr(errno)
 }
@@ -546,7 +534,7 @@ func Stat(path string, st *Stat_t) error {
 	if path == "" {
 		return EINVAL
 	}
-	dirFd, _, pathPtr, pathLen := preparePath(path)
+	dirFd, pathPtr, pathLen := preparePath(path)
 	errno := path_filestat_get(dirFd, LOOKUP_SYMLINK_FOLLOW, pathPtr, pathLen, st)
 	setDefaultMode(st)
 	return errnoErr(errno)
@@ -556,7 +544,7 @@ func Lstat(path string, st *Stat_t) error {
 	if path == "" {
 		return EINVAL
 	}
-	dirFd, _, pathPtr, pathLen := preparePath(path)
+	dirFd, pathPtr, pathLen := preparePath(path)
 	errno := path_filestat_get(dirFd, 0, pathPtr, pathLen, st)
 	setDefaultMode(st)
 	return errnoErr(errno)
@@ -583,7 +571,7 @@ func Unlink(path string) error {
 	if path == "" {
 		return EINVAL
 	}
-	dirFd, _, pathPtr, pathLen := preparePath(path)
+	dirFd, pathPtr, pathLen := preparePath(path)
 	errno := path_unlink_file(dirFd, pathPtr, pathLen)
 	return errnoErr(errno)
 }
@@ -592,7 +580,7 @@ func Rmdir(path string) error {
 	if path == "" {
 		return EINVAL
 	}
-	dirFd, _, pathPtr, pathLen := preparePath(path)
+	dirFd, pathPtr, pathLen := preparePath(path)
 	errno := path_remove_directory(dirFd, pathPtr, pathLen)
 	return errnoErr(errno)
 }
@@ -623,7 +611,7 @@ func UtimesNano(path string, ts []Timespec) error {
 	if path == "" {
 		return EINVAL
 	}
-	dirFd, _, pathPtr, pathLen := preparePath(path)
+	dirFd, pathPtr, pathLen := preparePath(path)
 	errno := path_filestat_set_times(
 		dirFd,
 		LOOKUP_SYMLINK_FOLLOW,
@@ -640,8 +628,8 @@ func Rename(from, to string) error {
 	if from == "" || to == "" {
 		return EINVAL
 	}
-	oldDirFd, _, oldPathPtr, oldPathLen := preparePath(from)
-	newDirFd, _, newPathPtr, newPathLen := preparePath(to)
+	oldDirFd, oldPathPtr, oldPathLen := preparePath(from)
+	newDirFd, newPathPtr, newPathLen := preparePath(to)
 	errno := path_rename(
 		oldDirFd,
 		oldPathPtr,
@@ -688,7 +676,7 @@ func Chdir(path string) error {
 	path = joinPath(dir, path)
 
 	var stat Stat_t
-	dirFd, _, pathPtr, pathLen := preparePath(path)
+	dirFd, pathPtr, pathLen := preparePath(path)
 	errno := path_filestat_get(dirFd, LOOKUP_SYMLINK_FOLLOW, pathPtr, pathLen, &stat)
 	if errno != 0 {
 		return errnoErr(errno)
@@ -707,7 +695,7 @@ func Readlink(path string, buf []byte) (n int, err error) {
 	if len(buf) == 0 {
 		return 0, nil
 	}
-	dirFd, _, pathPtr, pathLen := preparePath(path)
+	dirFd, pathPtr, pathLen := preparePath(path)
 	var nwritten size
 	errno := path_readlink(
 		dirFd,
@@ -729,8 +717,8 @@ func Link(path, link string) error {
 	if path == "" || link == "" {
 		return EINVAL
 	}
-	oldDirFd, _, oldPathPtr, oldPathLen := preparePath(path)
-	newDirFd, _, newPathPtr, newPathLen := preparePath(link)
+	oldDirFd, oldPathPtr, oldPathLen := preparePath(path)
+	newDirFd, newPathPtr, newPathLen := preparePath(link)
 	errno := path_link(
 		oldDirFd,
 		0,
@@ -747,7 +735,7 @@ func Symlink(path, link string) error {
 	if path == "" || link == "" {
 		return EINVAL
 	}
-	dirFd, _, pathPtr, pathlen := preparePath(link)
+	dirFd, pathPtr, pathlen := preparePath(link)
 	errno := path_symlink(
 		unsafe.StringData(path),
 		size(len(path)),
