@@ -108,7 +108,7 @@ func GetsockoptInt(fd, level, opt int) (value int, err error) {
 }
 
 func SetsockoptInt(fd, level, opt int, value int) error {
-	return nil
+	return ENOSYS
 }
 
 func SetReadDeadline(fd int, t int64) error {
@@ -124,5 +124,5 @@ func Shutdown(fd int, how int) error {
 }
 
 func SetNonblock(fd int, nonblocking bool) error {
-	return nil
+	return ENOSYS
 }
