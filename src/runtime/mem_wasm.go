@@ -8,16 +8,13 @@ import "unsafe"
 
 func sbrk(n uintptr) unsafe.Pointer {
 	grow := divRoundUp(n, physPageSize)
-	size := currentMemory()
-
-	if growMemory(int32(grow)) < 0 {
+	size := growMemory(int32(grow))
+	if size < 0 {
 		return nil
 	}
-
 	resetMemoryDataView()
 	return unsafe.Pointer(uintptr(size) * physPageSize)
 }
 
 // Implemented in src/runtime/sys_wasm.s
-func currentMemory() int32
 func growMemory(pages int32) int32
