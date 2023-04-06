@@ -263,7 +263,6 @@ func init() {
 		errno = fd_prestat_dir_name(preopenFd, &dirNameBuf[0], prestat.dir.prNameLen)
 		if errno != 0 {
 			panic("fd_prestat_dir_name: " + errno.Error())
-			continue
 		}
 
 		preopens = append(preopens, opendir{

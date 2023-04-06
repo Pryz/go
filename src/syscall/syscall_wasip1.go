@@ -343,7 +343,7 @@ func RawSyscall6(trap, a1, a2, a3, a4, a5, a6 uintptr) (r1, r2 uintptr, err Errn
 
 func Sysctl(key string) (string, error) {
 	if key == "kern.hostname" {
-		return "js", nil
+		return "wasip1", nil
 	}
 	return "", ENOSYS
 }
