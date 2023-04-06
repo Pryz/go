@@ -74,9 +74,12 @@ func (fd *FD) ReadDirent(buf []byte) (int, error) {
 	return n - len(b), nil
 }
 
+// https://github.com/WebAssembly/WASI/blob/main/legacy/preview1/docs.md#-dirent-record
+const sizeOfDirent = 24
+
 func direntReclen(buf []byte) (uint64, bool) {
 	namelen, ok := direntNamlen(buf)
-	return 24 + namelen, ok
+	return sizeOfDirent + namelen, ok
 }
 
 func direntNamlen(buf []byte) (uint64, bool) {
@@ -93,25 +96,6 @@ func readInt(b []byte, off, size uintptr) (u uint64, ok bool) {
 		return 0, false
 	}
 	return readIntLE(b[off:], size), true
-}
-
-func readIntBE(b []byte, size uintptr) uint64 {
-	switch size {
-	case 1:
-		return uint64(b[0])
-	case 2:
-		_ = b[1] // bounds check hint to compiler; see golang.org/issue/14808
-		return uint64(b[1]) | uint64(b[0])<<8
-	case 4:
-		_ = b[3] // bounds check hint to compiler; see golang.org/issue/14808
-		return uint64(b[3]) | uint64(b[2])<<8 | uint64(b[1])<<16 | uint64(b[0])<<24
-	case 8:
-		_ = b[7] // bounds check hint to compiler; see golang.org/issue/14808
-		return uint64(b[7]) | uint64(b[6])<<8 | uint64(b[5])<<16 | uint64(b[4])<<24 |
-			uint64(b[3])<<32 | uint64(b[2])<<40 | uint64(b[1])<<48 | uint64(b[0])<<56
-	default:
-		panic("syscall: readInt with unsupported size")
-	}
 }
 
 func readIntLE(b []byte, size uintptr) uint64 {
