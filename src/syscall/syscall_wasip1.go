@@ -387,8 +387,12 @@ func Gettimeofday(tv *Timeval) error {
 
 func Kill(pid int, signum Signal) error {
 	// WASI does not have the notion of processes nor signal handlers.
-	// Any signal that the application raises will be interpreted as being
-	// directed to itself, and will cause termination of the program.
+	//
+	// Any signal that the application raises to the process itself will
+	// be interpreted as being cause for termination.
+	if pid > 0 && pid != Getpid() {
+		return ESRCH
+	}
 	ProcExit(128 + int32(signum))
 	return nil
 }
