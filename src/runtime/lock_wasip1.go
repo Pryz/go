@@ -24,8 +24,10 @@ func lock(l *mutex) {
 }
 
 func lock2(l *mutex) {
-	for l.key == mutex_locked {
-		Gosched()
+	if l.key == mutex_locked {
+		// wasm is single-threaded so we should never
+		// observe this.
+		throw("self deadlock")
 	}
 	gp := getg()
 	if gp.m.locks < 0 {
@@ -65,7 +67,7 @@ func notewakeup(n *note) {
 }
 
 func notesleep(n *note) {
-	throw("notesleep not supported by js")
+	throw("notesleep not supported by wasi")
 }
 
 func notetsleep(n *note, ns int64) bool {
