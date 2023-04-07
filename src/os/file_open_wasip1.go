@@ -8,7 +8,6 @@ package os
 
 import (
 	"internal/poll"
-	"path"
 	"syscall"
 )
 
@@ -20,12 +19,12 @@ func open(filePath string, flag int, perm uint32) (int, poll.SysFile, error) {
 	// os.(*File).Chdir is emulated by setting the working directory to the
 	// absolute path that this file was opened at, which is why we have to
 	// resolve and capture it here.
-	if !path.IsAbs(filePath) {
+	if filePath[0] != '/' {
 		wd, err := syscall.Getwd()
 		if err != nil {
 			return -1, poll.SysFile{}, err
 		}
-		absPath = path.Join(wd, filePath)
+		absPath = joinPath(wd, filePath)
 	}
 	fd, err := syscall.Open(absPath, flag, perm)
 	return fd, poll.SysFile{Path: absPath}, err
