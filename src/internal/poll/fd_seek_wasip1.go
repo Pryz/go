@@ -6,7 +6,10 @@
 
 package poll
 
-import "syscall"
+import (
+	"sync/atomic"
+	"syscall"
+)
 
 // Seek wraps syscall.Seek.
 func (fd *FD) Seek(offset int64, whence int) (int64, error) {
@@ -14,16 +17,18 @@ func (fd *FD) Seek(offset int64, whence int) (int64, error) {
 		return 0, err
 	}
 	defer fd.decref()
+	fileType := atomic.LoadUint32(&fd.Filetype)
 
-	if fd.Filetype == syscall.FILETYPE_UNKNOWN {
+	if fileType == syscall.FILETYPE_UNKNOWN {
 		var stat syscall.Stat_t
 		if err := fd.Fstat(&stat); err != nil {
 			return 0, err
 		}
-		fd.Filetype = stat.Filetype
+		fileType = syscall.Filetype(stat.Filetype)
+		atomic.StoreUint32(&fd.Filetype, fileType)
 	}
 
-	if fd.Filetype == syscall.FILETYPE_DIRECTORY {
+	if fileType == syscall.FILETYPE_DIRECTORY {
 		// If the file descriptor is opened on a directory, we reset the readdir
 		// cookie when seeking back to the beginning to allow reusing the file
 		// descriptor to scan the directory again.
