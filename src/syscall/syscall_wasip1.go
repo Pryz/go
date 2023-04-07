@@ -2,11 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// In this file, Filetype represents `filetype` from the WASI specification,
-// which is defined as an 8 bit integer. However, we define it as a 32 bit
-// integer in order to be able to perform atomic operations on the
-// internal/poll.SysFile.Filetype field.
-
 //go:build wasip1
 
 package syscall
@@ -20,10 +15,10 @@ import (
 
 type Dircookie = uint64
 
-type Filetype = uint32
+type Filetype = uint8
 
 const (
-	FILETYPE_UNKNOWN = iota
+	FILETYPE_UNKNOWN Filetype = iota
 	FILETYPE_BLOCK_DEVICE
 	FILETYPE_CHARACTER_DEVICE
 	FILETYPE_DIRECTORY

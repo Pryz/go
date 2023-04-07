@@ -12,11 +12,11 @@ import (
 
 type SysFile struct {
 	// Cache for the file type, lazily initialized when Seek is called.
-	Filetype syscall.Filetype
+	Filetype uint32
 
 	// If the file represents a directory, this field contains the current
 	// readdir position. It is reset to zero if the program calls Seek(0, 0).
-	Dircookie syscall.Dircookie
+	Dircookie uint64
 
 	// Absolute path of the file, as returned by syscall.PathOpen;
 	// this is used by Fchdir to emulate setting the current directory
@@ -113,15 +113,18 @@ func (fd *FD) Seek(offset int64, whence int) (int64, error) {
 		return 0, err
 	}
 	defer fd.decref()
-	fileType := atomic.LoadUint32(&fd.Filetype)
+	// syscall.Filetype is a uint8 but we store it as a uint32 in SysFile in
+	// order to use atomic load/store on the field, which is why we have to
+	// perform this type conversion.
+	fileType := syscall.Filetype(atomic.LoadUint32(&fd.Filetype))
 
 	if fileType == syscall.FILETYPE_UNKNOWN {
 		var stat syscall.Stat_t
 		if err := fd.Fstat(&stat); err != nil {
 			return 0, err
 		}
-		fileType = syscall.Filetype(stat.Filetype)
-		atomic.StoreUint32(&fd.Filetype, fileType)
+		fileType = stat.Filetype
+		atomic.StoreUint32(&fd.Filetype, uint32(fileType))
 	}
 
 	if fileType == syscall.FILETYPE_DIRECTORY {
