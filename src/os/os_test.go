@@ -1265,12 +1265,12 @@ func checkMode(t *testing.T, path string, mode FileMode) {
 }
 
 func TestChmod(t *testing.T) {
-	t.Parallel()
-
 	// Chmod is not supported on wasip1.
 	if runtime.GOOS == "wasip1" {
 		t.Skip("Chmod is not supported on " + runtime.GOOS)
 	}
+	t.Parallel()
+
 	f := newFile("TestChmod", t)
 	defer Remove(f.Name())
 	defer f.Close()
@@ -2188,11 +2188,10 @@ func TestLargeWriteToConsole(t *testing.T) {
 }
 
 func TestStatDirModeExec(t *testing.T) {
-	t.Parallel()
-
 	if runtime.GOOS == "wasip1" {
 		t.Skip("Chmod is not supported on " + runtime.GOOS)
 	}
+	t.Parallel()
 
 	const mode = 0111
 

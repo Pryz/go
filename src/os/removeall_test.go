@@ -425,7 +425,7 @@ func TestRemoveAllWithMoreErrorThanReqSize(t *testing.T) {
 			// Marking a directory as read-only in Windows does not prevent the RemoveAll
 			// from creating or removing files within it.
 			//
-			// For wasip1, there is no support for file permissionsk so we cannot prevent
+			// For wasip1, there is no support for file permissions so we cannot prevent
 			// RemovaAll from removing the files.
 			return
 		}

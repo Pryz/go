@@ -85,7 +85,13 @@ func (f *File) readdir(n int, mode readdirMode) (names []string, dirents []DirEn
 		}
 		rec := buf[:reclen]
 		d.bufp += int(reclen)
-
+		ino, ok := direntIno(rec)
+		if !ok {
+			break
+		}
+		if ino == 0 {
+			continue
+		}
 		const namoff = uint64(unsafe.Offsetof(syscall.Dirent{}.Name))
 		namlen, ok := direntNamlen(rec)
 		if !ok || namoff+namlen > uint64(len(rec)) {
