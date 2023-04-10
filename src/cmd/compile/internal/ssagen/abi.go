@@ -370,16 +370,16 @@ func paramsToWasmFields(f *ir.Func, result *abi.ABIParamResultInfo, abiParams []
 	wfs := make([]obj.WasmField, len(abiParams))
 	for i, p := range abiParams {
 		t := p.Type
-		switch {
-		case t.IsInteger() && t.Size() == 4:
+		switch t.Kind() {
+		case types.TINT32, types.TUINT32:
 			wfs[i].Type = obj.WasmI32
-		case t.IsInteger() && t.Size() == 8:
+		case types.TINT64, types.TUINT64:
 			wfs[i].Type = obj.WasmI64
-		case t.IsFloat() && t.Size() == 4:
+		case types.TFLOAT32:
 			wfs[i].Type = obj.WasmF32
-		case t.IsFloat() && t.Size() == 8:
+		case types.TFLOAT64:
 			wfs[i].Type = obj.WasmF64
-		case t.IsUnsafePtr():
+		case types.TUNSAFEPTR:
 			wfs[i].Type = obj.WasmPtr
 		default:
 			base.ErrorfAt(f.Pos(), 0, "go:wasmimport %s %s: unsupported parameter type %s", f.WasmImport.Module, f.WasmImport.Name, t.String())
@@ -390,17 +390,21 @@ func paramsToWasmFields(f *ir.Func, result *abi.ABIParamResultInfo, abiParams []
 }
 
 func resultsToWasmFields(f *ir.Func, result *abi.ABIParamResultInfo, abiParams []abi.ABIParamAssignment) []obj.WasmField {
+	if len(abiParams) > 1 {
+		base.ErrorfAt(f.Pos(), 0, "go:wasmimport %s %s: too many return values", f.WasmImport.Module, f.WasmImport.Name)
+		return nil
+	}
 	wfs := make([]obj.WasmField, len(abiParams))
 	for i, p := range abiParams {
 		t := p.Type
-		switch {
-		case t.IsInteger() && t.Size() == 4:
+		switch t.Kind() {
+		case types.TINT32, types.TUINT32:
 			wfs[i].Type = obj.WasmI32
-		case t.IsInteger() && t.Size() == 8:
+		case types.TINT64, types.TUINT64:
 			wfs[i].Type = obj.WasmI64
-		case t.IsFloat() && t.Size() == 4:
+		case types.TFLOAT32:
 			wfs[i].Type = obj.WasmF32
-		case t.IsFloat() && t.Size() == 8:
+		case types.TFLOAT64:
 			wfs[i].Type = obj.WasmF64
 		default:
 			base.ErrorfAt(f.Pos(), 0, "go:wasmimport %s %s: unsupported result type %s", f.WasmImport.Module, f.WasmImport.Name, t.String())
