@@ -6,6 +6,7 @@ package dsa
 
 import (
 	"crypto/rand"
+	"internal/testenv"
 	"math/big"
 	"testing"
 )
@@ -65,6 +66,9 @@ func testParameterGeneration(t *testing.T, sizes ParameterSizes, L, N int) {
 func TestParameterGeneration(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping parameter generation test in short mode")
+	}
+	if testenv.CPUIsSlow() {
+		t.Skip("skipping parameter generation test on slow CPU")
 	}
 
 	testParameterGeneration(t, L1024N160, 1024, 160)
